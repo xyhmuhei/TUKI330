@@ -122,17 +122,19 @@
     }
     
     /* 磁带主体 */
-    #cassette-tape {
-        width: 330px; height: 210px;
-        background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.2)), var(--jelly-pink);
-        backdrop-filter: blur(8px); /* 磨砂玻璃感 */
-        border-radius: 20px; /* 更圆润 */
-        border: 3px solid white; /* 白边看起来像贴纸 */
-        box-shadow: var(--soft-shadow);
-        position: relative;
-        display: flex; flex-direction: column;
-        padding: 12px; box-sizing: border-box;
-    }
+#cassette-tape {
+    max-width: 330px; /* 【修改】设置一个最大宽度 */
+    width: 95%;       /* 【修改】让它在小屏幕上自动缩放 */
+    height: 210px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.2)), var(--jelly-pink);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+    border: 3px solid white;
+    box-shadow: var(--soft-shadow);
+    position: relative;
+    display: flex; flex-direction: column;
+    padding: 12px; box-sizing: border-box;
+}
 
     /* 漂浮动画 */
     .floating { animation: float 3s ease-in-out infinite; }
@@ -152,13 +154,14 @@
     .bl { bottom: 10px; left: 10px; } .br { bottom: 10px; right: 10px; }
 
     /* 顶部贴纸 */
-    .cassette-header {
-        height: 40px; background: white;
-        margin: 0 20px 8px 20px; border-radius: 8px;
-        transform: rotate(-1deg);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        display: flex; align-items: center; justify-content: center;
-    }
+.cassette-header {
+    height: 40px; background: white;
+    margin: 0 0 8px 0; /* 【修改】去掉了左右外边距 */
+    transform: rotate(-1deg);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    display: flex; align-items: center; justify-content: center;
+}
+
     .sticker-label {
         width: 100%; text-align: center;
         border: 2px dashed #f48fb1; border-radius: 6px; margin: 3px; height: calc(100% - 6px);
