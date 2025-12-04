@@ -4,9 +4,10 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0, user-scalable=yes"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no"
     />
     <title>EPhone PWA</title>
+    <!-- 引入样式 -->
     <link rel="stylesheet" href="style.css" />
     <link
       rel="apple-touch-icon"
@@ -27,42 +28,154 @@
     <style>
       /* --- 核心配色：蜂蜜黄油 & 焦糖复古 --- */
       :root {
-        --bg-color: #fdfbf7; /* 暖米白 */
-        --glass-base: rgba(255, 253, 240, 0.65); /* 奶油底色玻璃 */
-        --border-color: #efe6d5; /* 柔和的边框色 */
-        --accent-gold: #e6ceac; /* 复古金 */
-        --text-brown: #8d6e63; /* 焦糖棕色字 */
-        --text-deep: #5d4037; /* 深咖啡色字 */
-        --shadow-warm: 0 15px 30px rgba(210, 180, 140, 0.25); /* 暖棕色投影 */
-        --font-main: 'Courier New', Courier, monospace; /* 复古打字机字体 */
+        --bg-color: #fdfbf7;
+        --glass-base: rgba(255, 253, 240, 0.65);
+        --border-color: #efe6d5;
+        --accent-gold: #e6ceac;
+        --text-brown: #8d6e63;
+        --text-deep: #5d4037;
+        --shadow-warm: 0 15px 30px rgba(210, 180, 140, 0.25);
+        --font-main: 'Courier New', Courier, monospace;
+        /* --- 手机适配核心变量 --- */
+        --app-height: 100dvh; /* 优先使用现代浏览器的动态高度 */
       }
 
       html {
         height: 100%;
         -webkit-text-size-adjust: 100%;
+        overflow: hidden; /* 防止橡皮筋效果 */
       }
+
       body {
         margin: 0;
         font-family: var(--font-main);
         font-weight: bold;
-        height: 100%;
+        /* 兼容性处理：如果浏览器不支持dvh，使用JS计算的变量，最后降级到100vh */
+        height: 100vh; 
+        height: var(--app-height);
         overflow: hidden;
         background-color: var(--bg-color);
-        /* 背景：极淡的复古格子 */
         background-image: linear-gradient(rgba(230, 206, 172, 0.2) 1px, transparent 1px),
           linear-gradient(90deg, rgba(230, 206, 172, 0.2) 1px, transparent 1px);
         background-size: 40px 40px;
         color: var(--text-brown);
+        position: fixed; /* 强制固定，防止滚动 */
+        width: 100%;
+        top: 0;
+        left: 0;
       }
 
       #phone-screen {
         width: 100%;
-        height: 100vh;
+        height: 100%;
         display: flex;
         flex-direction: column;
         position: relative;
         overflow: hidden;
       }
+
+      /* --- 登录锁屏界面 --- */
+      #login-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #fdfbf7;
+        z-index: 9999; /* 最高层级 */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        background-image: radial-gradient(#e6ceac 1px, transparent 1px);
+        background-size: 20px 20px;
+      }
+      
+      #login-overlay.unlocked {
+        transform: translateY(-100%);
+        pointer-events: none;
+      }
+
+      .login-box {
+        background: linear-gradient(to bottom, #fdfbf7 0%, #f4eadd 100%);
+        border: 2px solid #e0d0b8;
+        border-radius: 20px;
+        padding: 40px 30px;
+        box-shadow: 0 15px 35px rgba(141, 110, 99, 0.25);
+        text-align: center;
+        position: relative;
+      }
+      /* 锁屏顶部的装饰 */
+      .login-box::before {
+        content: 'SECURITY LOCK';
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #5d4037;
+        color: #fff;
+        font-size: 10px;
+        padding: 4px 10px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+      }
+
+      .login-title {
+        color: var(--text-deep);
+        font-size: 18px;
+        margin-bottom: 25px;
+        letter-spacing: 2px;
+      }
+
+      .login-input {
+        background: #fffdf5;
+        border: 2px solid #e6ceac;
+        padding: 12px 15px;
+        border-radius: 8px;
+        font-family: var(--font-main);
+        font-size: 18px;
+        color: var(--text-deep);
+        width: 200px;
+        text-align: center;
+        outline: none;
+        letter-spacing: 5px; /* 密码掩码间距 */
+        margin-bottom: 20px;
+        transition: 0.3s;
+      }
+      .login-input:focus {
+        border-color: #8d6e63;
+        box-shadow: 0 0 0 4px rgba(141, 110, 99, 0.1);
+      }
+
+      .login-btn {
+        background: #5d4037;
+        color: #fff;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 50px;
+        font-family: var(--font-main);
+        font-weight: bold;
+        font-size: 14px;
+        cursor: pointer;
+        box-shadow: 0 5px 15px rgba(93, 64, 55, 0.3);
+        transition: 0.2s;
+      }
+      .login-btn:active {
+        transform: scale(0.95);
+        box-shadow: 0 2px 5px rgba(93, 64, 55, 0.3);
+      }
+      .login-error {
+        color: #d32f2f;
+        font-size: 12px;
+        height: 20px;
+        margin-top: 10px;
+        opacity: 0;
+        transition: 0.3s;
+      }
+      .login-error.show { opacity: 1; }
+
+      /* --- 原有样式继续 --- */
       .screen {
         width: 100%;
         height: 100%;
@@ -105,7 +218,7 @@
         align-items: center;
       }
 
-      /* --- 播放器主体：精致的奶油方糖 --- */
+      /* --- 播放器主体 --- */
       #desktop-layout {
         width: 100%;
         display: flex;
@@ -115,26 +228,20 @@
       }
 
       #desktop-app-container {
-        /* 实体奶油塑料质感 */
         background: linear-gradient(to bottom, #fdfbf7 0%, #f4eadd 100%);
-        /* 塑料的厚实边框 */
         border: 1px solid #e0d0b8;
-        /* 模拟塑料注塑的圆润感 */
         border-radius: 20px;
-        /* 稍微宽一点，给磁带留空间 */
         padding: 50px 35px 60px 35px;
         display: flex;
-        gap: 35px; /* 拉大两个卷轴的距离 */
+        gap: 35px; 
         position: relative;
-        /* 立体投影：像放在桌面上一样 */
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), /* 顶部高光 */ inset 0 -3px 5px rgba(0, 0, 0, 0.05),
-          /* 底部阴影 */ 0 15px 35px rgba(141, 110, 99, 0.25), /* 桌面投影 */ 0 5px 10px rgba(0, 0, 0, 0.05);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -3px 5px rgba(0, 0, 0, 0.05),
+           0 15px 35px rgba(141, 110, 99, 0.25), 0 5px 10px rgba(0, 0, 0, 0.05);
         align-items: center;
         justify-content: center;
         min-width: 320px;
       }
 
-      /* 顶部铭牌：EPHONE MIX (复古金属牌风格) */
       #desktop-app-container::before {
         content: 'EPHONE MIX';
         position: absolute;
@@ -142,32 +249,26 @@
         left: 50%;
         transform: translateX(-50%);
         font-size: 11px;
-        font-family: Helvetica, Arial, sans-serif; /* 铭牌用无衬线体显得更工业复古 */
-        color: #a1887f; /* 浅咖色字 */
-
-        /* 铭牌背景：做成凹进去的浅金色 */
+        font-family: Helvetica, Arial, sans-serif;
+        color: #a1887f;
         background: linear-gradient(to bottom, #fffcf5, #f1e9d2);
         padding: 4px 16px;
         border-radius: 4px;
         letter-spacing: 2px;
         font-weight: 900;
-
-        /* 铭牌的立体感 */
         border: 1px solid #d7ccc8;
         box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05), 0 1px 0 #fff;
         z-index: 10;
       }
 
-      /* 螺丝钉：复古黄铜色 */
       .screw {
         position: absolute;
         width: 9px;
         height: 9px;
-        background: linear-gradient(135deg, #e6ceac, #bf9e74); /* 金属光泽 */
+        background: linear-gradient(135deg, #e6ceac, #bf9e74);
         border-radius: 50%;
         box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1);
       }
-      /* 给螺丝加个小一字槽，增加精致度 */
       .screw::after {
         content: '';
         position: absolute;
@@ -178,42 +279,26 @@
         height: 1px;
         background: rgba(93, 64, 55, 0.3);
       }
-
-      .screw.tl {
-        top: 12px;
-        left: 12px;
-      }
-      .screw.tr {
-        top: 12px;
-        right: 12px;
-      }
-      .screw.bl {
-        bottom: 12px;
-        left: 12px;
-      }
-      .screw.br {
-        bottom: 12px;
-        right: 12px;
-      }
+      .screw.tl { top: 12px; left: 12px; }
+      .screw.tr { top: 12px; right: 12px; }
+      .screw.bl { bottom: 12px; left: 12px; }
+      .screw.br { bottom: 12px; right: 12px; }
+      
       .tape-window-bg {
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 240px; /* 变宽，连接两个卷轴 */
+        width: 240px;
         height: 90px;
-        /* 贴纸质感：米黄色 */
         background: #fffdf5;
-        /* 贴纸边框 */
         border: 2px solid #e6ceac;
-        border-radius: 35px; /* 变成胶囊形状 */
+        border-radius: 35px;
         z-index: 0;
-        /* 内部纹理：横线，像可以写字的地方 */
         background-image: repeating-linear-gradient(transparent, transparent 19px, #f2e6d9 20px);
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
       }
 
-      /* --- 图标部分 --- */
       .desktop-app-icon {
         position: relative;
         z-index: 1;
@@ -226,27 +311,18 @@
         -webkit-tap-highlight-color: transparent;
       }
 
-      /* --- 1. 磁带卷轴动画与质感 --- */
-
-      /* 定义旋转动画 */
       @keyframes reel-spin {
-        from {
-          transform: rotate(0deg);
-        }
-        to {
-          transform: rotate(360deg);
-        }
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
       }
 
       .icon-bg-desktop {
         width: 76px;
         height: 76px;
         border-radius: 50%;
-        /* 卷轴背景：深色 */
         background: #3e2723;
-        /* 关键：齿轮边框效果 */
         border: 4px dashed #d7ccc8;
-        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5), /* 内部深邃感 */ 0 2px 5px rgba(0, 0, 0, 0.1);
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5), 0 2px 5px rgba(0, 0, 0, 0.1);
         display: flex;
         justify-content: center;
         align-items: center;
@@ -254,7 +330,6 @@
         transition: transform 0.3s;
         position: relative;
       }
-      /* 给图片一点内缩，露出齿轮 */
       .icon-bg-desktop img {
         width: 86%;
         height: 86%;
@@ -264,7 +339,6 @@
         animation: reel-spin 10s linear infinite;
         opacity: 0.95;
       }
-      /* 磁带底部的梯形区域 */
       .tape-bottom-deco {
         position: absolute;
         bottom: 0;
@@ -272,15 +346,12 @@
         transform: translateX(-50%);
         width: 220px;
         height: 35px;
-        /* 颜色稍微深一点，模拟磁带下半部分 */
         background: #f0e6d2;
-        /* 做成梯形效果 */
         clip-path: polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%);
         border-top: 1px solid #e0d0b8;
         z-index: 5;
       }
 
-      /* 装饰性的小孔 */
       .tape-holes {
         position: absolute;
         bottom: 10px;
@@ -296,23 +367,11 @@
         content: '';
         width: 12px;
         height: 12px;
-        background: #5d4037; /* 深孔颜色 */
+        background: #5d4037;
         border-radius: 50%;
         box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.3);
       }
 
-      /* 图片应用旋转动画 */
-      .icon-bg-desktop img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-radius: 50%;
-        /* 这里添加动画：10秒转一圈，线性无限循环 */
-        animation: reel-spin 10s linear infinite;
-        opacity: 0.9; /* 稍微透明一点更有复古感 */
-      }
-
-      /* 给卷轴加一个中心轴装饰，看起来更像磁带 */
       .icon-bg-desktop::after {
         content: '';
         position: absolute;
@@ -323,35 +382,25 @@
         z-index: 5;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
       }
-      .icon-bg-desktop img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-radius: 50%;
-      }
 
-      /* 标签：复古打字机纸条 */
       .desktop-app-icon .label {
         font-size: 12px;
         color: var(--text-deep);
-        /* 米黄色纸张感 */
         background: #fffdf0;
         padding: 3px 8px;
         border: 1px solid #efe6d5;
-        border-radius: 2px; /* 几乎直角 */
+        border-radius: 2px;
         box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.05);
         font-weight: bold;
-        transform: rotate(-2deg); /* 微微歪 */
+        transform: rotate(-2deg);
       }
       .desktop-app-icon:last-child .label {
         transform: rotate(1deg);
       }
-
       .desktop-app-icon:active .icon-bg-desktop {
         transform: scale(0.92);
       }
 
-      /* App 窗口 */
       .app-window {
         width: 100%;
         height: 100%;
@@ -365,6 +414,9 @@
         opacity: 0;
         transform: scale(0.95);
         transition: 0.3s;
+        /* 确保APP内部也能利用全屏，不被底部栏遮挡 */
+        padding-bottom: env(safe-area-inset-bottom);
+        box-sizing: border-box;
       }
       .app-window.active {
         display: flex;
@@ -378,10 +430,11 @@
         background: #fff;
       }
 
-      /* --- 右下角唱片按钮：蜂蜜黄胶 --- */
+      /* Fab Styles */
       #fab-container {
         position: fixed;
-        bottom: 50px;
+        /* 增加对iPhone底部横条的适配，避免太靠下 */
+        bottom: calc(50px + env(safe-area-inset-bottom));
         right: 25px;
         z-index: 1000;
         width: 64px;
@@ -392,19 +445,13 @@
         width: 100%;
         height: 100%;
         border-radius: 50%;
-        /* 修改颜色：使用更柔和的复古金色 */
         background-color: #eecfa1;
-
-        /* 修改纹理：让纹理对比度低一点，更精致 */
         background-image: repeating-radial-gradient(
           #eecfa1 0,
           #eecfa1 2px,
           #e0b878 3px,
-          /* 稍微深一点的金 */ #eecfa1 4px
+          #eecfa1 4px
         );
-
-        /* 阴影稍微加深一点 */
-        box-shadow: 0 0 0 3px #fff, 0 6px 15px rgba(161, 136, 127, 0.4);
         box-shadow: 0 0 0 3px #fff, 0 6px 15px rgba(251, 192, 45, 0.3);
         display: flex;
         justify-content: center;
@@ -414,18 +461,16 @@
         position: relative;
       }
 
-      /* 中间标签 */
       #fab-main::before {
         content: '';
         position: absolute;
         width: 26px;
         height: 26px;
-        background: #fff8e1; /* 奶白色标签 */
+        background: #fff8e1;
         border-radius: 50%;
         z-index: 1;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
       }
-      /* 中间孔 */
       #fab-main::after {
         content: '';
         position: absolute;
@@ -444,20 +489,15 @@
         transition: 0.3s;
       }
 
-      #fab-main:active {
-        transform: rotate(15deg) scale(0.95);
-      }
+      #fab-main:active { transform: rotate(15deg) scale(0.95); }
       #fab-main.expanded {
         transform: rotate(90deg);
         background: #fff;
         background-image: none;
       }
       #fab-main.expanded::before,
-      #fab-main.expanded::after {
-        opacity: 0;
-      }
+      #fab-main.expanded::after { opacity: 0; }
 
-      /* 菜单 */
       .fab-actions {
         position: absolute;
         bottom: 80px;
@@ -493,22 +533,18 @@
         color: var(--text-brown);
         font-size: 14px;
         border: 1px solid #f0f0f0;
-        padding: 0; /* 去掉内边距 */
-        overflow: hidden; /* 确保图片不溢出 */
-        background: #fff;
+        padding: 0;
+        overflow: hidden;
       }
-      /* 图片填满按钮 */
       .fab-mini-btn img {
         width: 100%;
         height: 100%;
         object-fit: cover;
       }
-
-      /* SVG 图标大小适配 */
       .fab-mini-btn svg {
         width: 20px;
         height: 20px;
-        fill: var(--text-deep); /* 使用深棕色填充 */
+        fill: var(--text-deep);
       }
       .fab-label {
         background: #fff;
@@ -521,17 +557,12 @@
         font-weight: bold;
       }
 
-      /* 隐身模式 */
       #fab-container.ghost-mode {
-        opacity: 0; /* 完全透明，看不见 */
-        pointer-events: none; /* 鼠标穿透，点不到原位置 */
+        opacity: 0;
+        pointer-events: none;
       }
+      #fab-container.ghost-mode .fab-actions { display: none; }
 
-      #fab-container.ghost-mode .fab-actions {
-        display: none;
-      }
-
-      /* Toast */
       #toast-msg {
         position: fixed;
         bottom: 50px;
@@ -553,31 +584,46 @@
         transform: translateX(-50%) translateY(0);
       }
 
-      /* ★★★★★ 这里是你要复制进去的代码 开始 ★★★★★ */
-      /* 边缘感应层样式 */
       .edge-sensor {
         position: fixed;
-        z-index: 1500; /* 必须比App高 */
-        background: transparent; /* 透明看不见 */
+        z-index: 1500;
+        background: transparent;
       }
-      /* 顶部感应条 */
       .edge-sensor.top { top: 0; left: 0; width: 100%; height: 30px; }
-      /* 底部感应条 */
       .edge-sensor.bottom { bottom: 0; left: 0; width: 100%; height: 30px; }
-      /* 左侧感应条 */
       .edge-sensor.left { top: 30px; bottom: 30px; left: 0; width: 15px; }
-      /* 右侧感应条 */
       .edge-sensor.right { top: 30px; bottom: 30px; right: 0; width: 15px; }
-      /* ★★★★★ 这里是你要复制进去的代码 结束 ★★★★★ */
-
-
     </style>
+    
+    <!-- 手机全屏适配 JS (防止地址栏遮挡) -->
+    <script>
+      // 核心逻辑：计算实际视口高度，写入CSS变量
+      function setAppHeight() {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+      }
+      // 初始化执行
+      setAppHeight();
+      // 监听 resize 和 orientationchange
+      window.addEventListener('resize', setAppHeight);
+      window.addEventListener('orientationchange', setAppHeight);
+    </script>
   </head>
   <body>
-    <div id="phone-screen">
-      <!-- 状态栏 HTML 已移除 -->
+    <!-- 登录锁屏遮罩 -->
+    <div id="login-overlay">
+      <div class="login-box">
+        <div class="login-title">ENTER PASSCODE</div>
+        <!-- 密码输入框 -->
+        <input type="password" id="login-pwd" class="login-input" placeholder="●●●●" maxlength="20" />
+        <br />
+        <button class="login-btn" onclick="attemptLogin()">UNLOCK</button>
+        <div class="login-error" id="login-error-msg">Incorrect Passcode</div>
+      </div>
+    </div>
 
-      <!-- 主屏幕 (Home Screen) -->
+    <div id="phone-screen">
+      <!-- 主屏幕 -->
       <div id="home-screen" class="screen">
         <div id="home-screen-pages-container">
           <div id="home-screen-pages">
@@ -585,21 +631,16 @@
               <div id="main-content-area">
                 <div id="desktop-layout">
                   <div id="desktop-app-container">
-                    <!-- 装饰：四个角的螺丝钉 -->
                     <div class="screw tl"></div>
                     <div class="screw tr"></div>
                     <div class="screw bl"></div>
                     <div class="screw br"></div>
-
-                    <!-- 【新增】磁带底部的梯形装饰，更有磁带味 -->
                     <div class="tape-bottom-deco">
                       <div class="tape-holes"></div>
                     </div>
-
-                    <!-- 装饰：中间的磁带视窗背景 -->
                     <div class="tape-window-bg"></div>
 
-                    <!-- 左卷轴：330 -->
+                    <!-- App A -->
                     <div class="desktop-app-icon" onclick="openApp('app-a')">
                       <div class="icon-bg-desktop">
                         <img
@@ -610,7 +651,7 @@
                       <span class="label">330</span>
                     </div>
 
-                    <!-- 右卷轴：兔K -->
+                    <!-- App B -->
                     <div class="desktop-app-icon" onclick="openApp('app-b')">
                       <div class="icon-bg-desktop">
                         <img
@@ -628,6 +669,7 @@
         </div>
       </div>
 
+      <!-- App Windows -->
       <div id="app-a" class="app-window app-frame">
         <iframe data-src="https://xyhmuhei.github.io/sfsfdf/" src="" class="app-iframe"></iframe>
       </div>
@@ -639,38 +681,24 @@
       <!-- 悬浮按钮 -->
       <div id="fab-container">
         <div class="fab-actions">
-          <!-- 330 按钮：换成图片 -->
           <div class="fab-action-btn" onclick="openApp('app-a')">
             <span class="fab-label">330</span>
             <div class="fab-mini-btn">
-              <img
-                src="https://s3plus.meituan.net/opapisdk/op_ticket_885190757_1756312261242_qdqqd_g0eriz.jpeg"
-                alt="330"
-              />
+              <img src="https://s3plus.meituan.net/opapisdk/op_ticket_885190757_1756312261242_qdqqd_g0eriz.jpeg" alt="330" />
             </div>
           </div>
-
-          <!-- 兔K 按钮：换成图片 -->
           <div class="fab-action-btn" onclick="openApp('app-b')">
             <span class="fab-label">兔K</span>
             <div class="fab-mini-btn">
               <img src="https://i.postimg.cc/Kj8JnRcp/267611-CC01-F8-A3-B4910-A2-C2-FFDE479-DC.jpg" alt="兔K" />
             </div>
           </div>
-
-          <!-- 隐藏按钮：换成 SVG (眼睛关闭图标) -->
           <div class="fab-action-btn" onclick="hideFab()">
             <span class="fab-label">隐藏</span>
             <div class="fab-mini-btn">
-              <svg viewBox="0 0 24 24">
-                <path
-                  d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46A11.804 11.804 0 0 0 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"
-                />
-              </svg>
+              <svg viewBox="0 0 24 24"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46A11.804 11.804 0 0 0 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>
             </div>
           </div>
-
-          <!-- 主页按钮：换成 SVG (房子图标) -->
           <div class="fab-action-btn" onclick="goHome()">
             <span class="fab-label">主页</span>
             <div class="fab-mini-btn">
@@ -678,67 +706,110 @@
             </div>
           </div>
         </div>
-
         <div id="fab-main"></div>
       </div>
 
-    <!-- ★★★★★ 这里是你要复制进去的代码 开始 ★★★★★ -->
-    <!-- 全屏边缘感应层 (用于在App内双击唤醒) -->
-    <div class="edge-sensor top"></div>
-    <div class="edge-sensor bottom"></div>
-    <div class="edge-sensor left"></div>
-    <div class="edge-sensor right"></div>
-    <!-- ★★★★★ 这里是你要复制进去的代码 结束 ★★★★★ -->
+      <!-- 边缘感应 -->
+      <div class="edge-sensor top"></div>
+      <div class="edge-sensor bottom"></div>
+      <div class="edge-sensor left"></div>
+      <div class="edge-sensor right"></div>
 
       <div id="toast-msg"></div>
     </div>
 
     <script>
+      // 1. 登录逻辑
+      const loginOverlay = document.getElementById('login-overlay');
+      const loginPwdInput = document.getElementById('login-pwd');
+      const loginErrorMsg = document.getElementById('login-error-msg');
+
+      // 检查本地是否已有登录记录 (可选，避免刷新重复登录)
+      if (localStorage.getItem('ephone_unlocked') === 'true') {
+        loginOverlay.classList.add('unlocked');
+      }
+
+      async function attemptLogin() {
+        const pwd = loginPwdInput.value;
+        if (!pwd) return;
+
+        // 如果你没有运行 Node.js 后端，请暂时使用这段代码：
+        // const TEMP_PASSWORD = "123"; // 在这里修改临时密码
+        // if (pwd === TEMP_PASSWORD) {
+        //     unlockSuccess();
+        //     return;
+        // } else {
+        //     showError();
+        //     return;
+        // }
+        
+        // --- 真正的VPS后端验证逻辑 ---
+        try {
+          const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pwd })
+          });
+          const data = await response.json();
+          
+          if (data.success) {
+            unlockSuccess();
+          } else {
+            showError();
+          }
+        } catch (e) {
+            // 如果请求失败（比如没开服务器），降级处理（可选）
+            showError();
+            console.error("Login Error:", e);
+        }
+      }
+
+      function unlockSuccess() {
+        loginOverlay.classList.add('unlocked');
+        localStorage.setItem('ephone_unlocked', 'true'); // 记住登录状态
+      }
+
+      function showError() {
+        loginErrorMsg.classList.add('show');
+        loginPwdInput.value = '';
+        setTimeout(() => {
+          loginErrorMsg.classList.remove('show');
+        }, 2000);
+      }
+      
+      // 监听回车键登录
+      loginPwdInput.addEventListener('keypress', function(e) {
+        if(e.key === 'Enter') attemptLogin();
+      });
+
+
+      // 2. 原有的 App 逻辑
       const fabContainer = document.getElementById('fab-container');
       const fabMain = document.getElementById('fab-main');
-
-      // 这里把原来的 id="home-screen" 对应给 launcherScreen
       const launcherScreen = document.getElementById('home-screen');
-
-      // 获取所有的 App 窗口
       const frames = document.querySelectorAll('.app-frame');
       const toastMsg = document.getElementById('toast-msg');
 
-      // 图标定义
-      const menuIconSvg =
-        '<svg viewBox="0 0 24 24"><path d="M4 18h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1zm0-5h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1zM3 7c0 .55.45 1 1 1h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1z"/></svg>';
-      const closeIconSvg =
-        '<svg viewBox="0 0 24 24"><path d="M18.3 5.71a.996.996 0 0 0-1.41 0L12 10.59 7.11 5.7a.996.996 0 1 0-1.41 1.41L10.59 12 5.7 16.89a.996.996 0 1 0 1.41 1.41L12 13.41l4.89 4.89a.996.996 0 1 0 1.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z"/></svg>';
+      const menuIconSvg = '<svg viewBox="0 0 24 24"><path d="M4 18h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1zm0-5h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1zM3 7c0 .55.45 1 1 1h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1z"/></svg>';
+      const closeIconSvg = '<svg viewBox="0 0 24 24"><path d="M18.3 5.71a.996.996 0 0 0-1.41 0L12 10.59 7.11 5.7a.996.996 0 1 0-1.41 1.41L10.59 12 5.7 16.89a.996.996 0 1 0 1.41 1.41L12 13.41l4.89 4.89a.996.996 0 1 0 1.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z"/></svg>';
 
-      // 初始化图标
       fabMain.innerHTML = menuIconSvg;
-
-      // --- 2. 核心功能逻辑 ---
 
       function openApp(frameId) {
         document.body.classList.add('app-open');
-
-        // 隐藏主屏幕 (模拟)
         launcherScreen.style.opacity = '0';
         launcherScreen.style.transform = 'scale(0.95)';
-
         frames.forEach(frame => {
           if (frame.id === frameId) {
-            // 激活当前 App
             frame.style.display = 'flex';
             setTimeout(() => frame.classList.add('active'), 10);
-
-            // 核心省流逻辑：如果 src 空才赋值
             const iframe = frame.querySelector('iframe');
-            if (iframe && iframe.dataset.src) {
-              iframe.src = iframe.dataset.src;
-            }
+            if (iframe && iframe.dataset.src) iframe.src = iframe.dataset.src;
           } else {
-            // 关闭其他 App
             frame.classList.remove('active');
             frame.style.display = 'none';
             const iframe = frame.querySelector('iframe');
-            if (iframe) iframe.src = ''; // 清理内存
+            if (iframe) iframe.src = '';
           }
         });
         closeMenu();
@@ -746,46 +817,30 @@
 
       function goHome() {
         document.body.classList.remove('app-open');
-
-        // 恢复主屏幕
         launcherScreen.style.opacity = '1';
         launcherScreen.style.transform = 'scale(1)';
-
-        // 关闭所有 App
         setTimeout(() => {
           frames.forEach(frame => {
             frame.classList.remove('active');
             frame.style.display = 'none';
-            // 清理 iframe
             const iframe = frame.querySelector('iframe');
             if (iframe) iframe.src = '';
           });
         }, 300);
         closeMenu();
-
-        // 回到主页时，如果处于隐身模式，自动恢复显示（可选，已注释）
-        // showFab();
       }
 
-      // --- [修改] 隐藏功能 ---
       function hideFab() {
         closeMenu();
-
-        // 1. 获取当前位置并固定（保持不变，防止乱跑）
         const mainRect = fabMain.getBoundingClientRect();
         fabContainer.style.left = mainRect.left + 'px';
         fabContainer.style.top = mainRect.top + 'px';
         fabContainer.style.bottom = 'auto';
         fabContainer.style.right = 'auto';
-
-        // 2. 开启隐身模式
         fabContainer.classList.add('ghost-mode');
-
-        // 修改这里的提示文字
         showToast('已隐藏。双击屏幕顶部或者底部唤出。');
       }
 
-      // 恢复显示
       function showFab() {
         fabContainer.classList.remove('ghost-mode');
       }
@@ -793,16 +848,12 @@
       function showToast(text) {
         toastMsg.innerText = text;
         toastMsg.classList.add('show');
-        setTimeout(() => {
-          toastMsg.classList.remove('show');
-        }, 3000);
+        setTimeout(() => toastMsg.classList.remove('show'), 3000);
       }
 
       function toggleMenu() {
-        // 如果处于隐身模式，点击主按钮就是“现身”
         if (fabContainer.classList.contains('ghost-mode')) {
           showFab();
-          // 现身的同时直接展开菜单，体验更流畅
           setTimeout(() => {
             fabContainer.classList.add('menu-open');
             fabMain.classList.add('expanded');
@@ -810,15 +861,9 @@
           }, 50);
           return;
         }
-
         fabContainer.classList.toggle('menu-open');
         fabMain.classList.toggle('expanded');
-
-        if (fabMain.classList.contains('expanded')) {
-          fabMain.innerHTML = closeIconSvg;
-        } else {
-          fabMain.innerHTML = menuIconSvg;
-        }
+        fabMain.innerHTML = fabMain.classList.contains('expanded') ? closeIconSvg : menuIconSvg;
       }
 
       function closeMenu() {
@@ -828,16 +873,13 @@
       }
 
       document.addEventListener('click', e => {
-        // 只有在菜单打开且点击外部时才关闭
-        // 如果是隐身模式点击了空白处，不需要做任何事
         if (!fabContainer.contains(e.target) && fabContainer.classList.contains('menu-open')) {
           closeMenu();
         }
       });
 
-      // --- 拖拽功能 (保持不变，加了隐身判断) ---
-      let isDragging = false;
-      let hasMoved = false;
+      // 拖拽逻辑
+      let isDragging = false, hasMoved = false;
       let startX, startY, initialLeft, initialTop;
       const dragThreshold = 5;
 
@@ -845,18 +887,10 @@
       fabMain.addEventListener('touchstart', startDrag, { passive: false });
 
       function startDrag(e) {
-        // 如果是隐身模式，禁止拖拽，只允许点击
-        if (fabContainer.classList.contains('ghost-mode')) {
-          return;
-        }
-
-        if (fabContainer.classList.contains('menu-open')) {
-          closeMenu();
-        }
-
+        if (fabContainer.classList.contains('ghost-mode')) return;
+        if (fabContainer.classList.contains('menu-open')) closeMenu();
         isDragging = true;
         hasMoved = false;
-
         if (e.type === 'touchstart') {
           startX = e.touches[0].clientX;
           startY = e.touches[0].clientY;
@@ -864,17 +898,13 @@
           startX = e.clientX;
           startY = e.clientY;
         }
-
         const rect = fabContainer.getBoundingClientRect();
         initialLeft = rect.left;
         initialTop = rect.top;
-
-        // 关键：拖拽开始时，将定位切换为 left/top，防止 CSS bottom/right 干扰
         fabContainer.style.bottom = 'auto';
         fabContainer.style.right = 'auto';
         fabContainer.style.left = initialLeft + 'px';
         fabContainer.style.top = initialTop + 'px';
-
         document.addEventListener('mousemove', onDrag);
         document.addEventListener('touchmove', onDrag, { passive: false });
         document.addEventListener('mouseup', stopDrag);
@@ -884,7 +914,6 @@
       function onDrag(e) {
         if (!isDragging) return;
         e.preventDefault();
-
         let clientX, clientY;
         if (e.type === 'touchmove') {
           clientX = e.touches[0].clientX;
@@ -893,14 +922,9 @@
           clientX = e.clientX;
           clientY = e.clientY;
         }
-
         const deltaX = clientX - startX;
         const deltaY = clientY - startY;
-
-        if (Math.abs(deltaX) > dragThreshold || Math.abs(deltaY) > dragThreshold) {
-          hasMoved = true;
-        }
-
+        if (Math.abs(deltaX) > dragThreshold || Math.abs(deltaY) > dragThreshold) hasMoved = true;
         fabContainer.style.left = initialLeft + deltaX + 'px';
         fabContainer.style.top = initialTop + deltaY + 'px';
       }
@@ -915,37 +939,26 @@
 
       fabMain.addEventListener('click', e => {
         e.stopPropagation();
-        // 无论是拖拽结束还是普通点击，如果没有发生位移，都视为点击
-        if (!hasMoved) {
-          toggleMenu();
-        }
+        if (!hasMoved) toggleMenu();
       });
 
-      // SW 注册
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          // --- [新增] 双击屏幕顶部或者底部唤出 ---
-
-          // 1. 电脑端双击 (dblclick)
           document.addEventListener('dblclick', () => {
             if (fabContainer.classList.contains('ghost-mode')) {
               showFab();
               showToast('已唤出菜单');
             }
           });
-
-          // 2. 手机端双击 (通过监听两次触摸的时间间隔)
           let lastTapTime = 0;
           document.addEventListener('touchend', e => {
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTapTime;
-
-            // 如果两次点击间隔小于 300ms 且大于 0，视为双击
             if (tapLength < 300 && tapLength > 0) {
               if (fabContainer.classList.contains('ghost-mode')) {
                 showFab();
                 showToast('已唤出菜单');
-                e.preventDefault(); // 防止双击触发缩放等默认行为
+                e.preventDefault();
               }
             }
             lastTapTime = currentTime;
