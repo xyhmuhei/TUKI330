@@ -5,20 +5,20 @@ const app = express();
 const bodyParser = require('body-parser');
 
 const PORT = 7000;
-
-// 子应用路径
+const USERS_FILE = path.join(__dirname, 'users.json');
 const PATH_TO_330 = '../site330'; 
 const PATH_TO_TUK = '../sitetuk';
-const USERS_FILE = path.join(__dirname, 'users.json');
 
-app.use(bodyParser.json());
+// ★★★ 关键修复：扩大数据限制到 50MB ★★★
+// 之前的默认限制只有 100kb，存几句聊天记录就爆了
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+
 app.use(express.static(path.join(__dirname, '/')));
-
-// 挂载子应用
 app.use('/site330', express.static(path.join(__dirname, PATH_TO_330)));
 app.use('/sitetuk', express.static(path.join(__dirname, PATH_TO_TUK)));
 
-// --- 数据读写函数 ---
+// 读写数据
 function getUsers() {
     if (!fs.existsSync(USERS_FILE)) {
         fs.writeFileSync(USERS_FILE, '[]'); 
@@ -28,57 +28,54 @@ function getUsers() {
         return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
     } catch (e) { return []; }
 }
-
 function saveUsersToFile(users) {
     fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
 }
 
-// --- API 接口 ---
-
-// 1. 注册
+// 注册
 app.post('/api/register', (req, res) => {
     const { username, password } = req.body;
     const users = getUsers();
-    if (users.find(u => u.username === username)) {
-        return res.json({ success: false, message: "用户名已存在" });
-    }
-    // 新用户初始化一个空的 userData 对象
+    if (users.find(u => u.username === username)) return res.json({ success: false, message: "已存在" });
     users.push({ username, password, userData: {} });
     saveUsersToFile(users);
-    res.json({ success: true, message: "注册成功" });
+    console.log(`[注册] 新用户: ${username}`);
+    res.json({ success: true });
 });
 
-// 2. 登录 (返回用户数据)
+// 登录
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     const users = getUsers();
     const user = users.find(u => u.username === username && u.password === password);
-
     if (user) {
-        // 登录成功，把保存的数据(userData)发给前端
+        console.log(`[登录] 用户: ${username}, 数据大小: ${JSON.stringify(user.userData).length} 字节`);
         res.json({ success: true, userData: user.userData || {} });
     } else {
-        res.json({ success: false, message: "账号或密码错误" });
+        res.json({ success: false, message: "失败" });
     }
 });
 
-// 3. ★★★ 新增：保存用户数据接口 ★★★
+// 保存数据
 app.post('/api/save_data', (req, res) => {
-    const { username, password, data } = req.body; // 每次保存都需要验证身份
-    const users = getUsers();
+    const { username, password, data } = req.body;
+    console.log(`[保存请求] 用户: ${username} 正在上传数据...`);
     
-    // 找到用户并更新数据
+    const users = getUsers();
     const userIndex = users.findIndex(u => u.username === username && u.password === password);
     
     if (userIndex !== -1) {
-        users[userIndex].userData = data; // 更新数据
-        saveUsersToFile(users);
+        users[userIndex].userData = data;
+        saveUsersToFile(users); // 写入硬盘
+        console.log(`[保存成功] 用户: ${username} 数据已更新。`);
         res.json({ success: true });
     } else {
-        res.json({ success: false, message: "身份验证失败" });
+        console.log(`[保存失败] 用户: ${username} 验证失败。`);
+        res.json({ success: false, message: "验证失败" });
     }
 });
 
 app.listen(PORT, () => {
     console.log(`EPhone 服务启动: http://localhost:${PORT}`);
+    console.log(`数据大小限制已提升至 50MB`);
 });
