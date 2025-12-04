@@ -769,66 +769,58 @@
       <div id="toast-msg"></div>
     </div>
 
-    <script>
-      // ========================================================
-      // 1. 全局变量与 DOM 元素获取
-      // ========================================================
+<script>
+      // ===========================
+      // 0. 全局变量
+      // ===========================
       const fabContainer = document.getElementById('fab-container');
       const fabMain = document.getElementById('fab-main');
       const launcherScreen = document.getElementById('home-screen');
       const frames = document.querySelectorAll('.app-frame');
       const toastMsg = document.getElementById('toast-msg');
 
-      // 登录相关元素
+      // 图标 SVG
+      const menuIconSvg = '<svg viewBox="0 0 24 24"><path d="M4 18h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1zm0-5h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1zM3 7c0 .55.45 1 1 1h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1z"/></svg>';
+      const closeIconSvg = '<svg viewBox="0 0 24 24"><path d="M18.3 5.71a.996.996 0 0 0-1.41 0L12 10.59 7.11 5.7a.996.996 0 1 0-1.41 1.41L10.59 12 5.7 16.89a.996.996 0 1 0 1.41 1.41L12 13.41l4.89 4.89a.996.996 0 1 0 1.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z"/></svg>';
+      
+      fabMain.innerHTML = menuIconSvg;
+
+      // 用户状态
+      let currentUser = null;
+      let currentPass = null;
+      let userSettings = {}; // 存放从VPS拉下来的所有APP数据
+
+      // ===========================
+      // 1. 登录与注册系统
+      // ===========================
       const loginOverlay = document.getElementById('login-overlay');
       const loginUserInput = document.getElementById('login-user');
       const loginPwdInput = document.getElementById('login-pwd');
       const loginErrorMsg = document.getElementById('login-error-msg');
       const loginTitle = document.getElementById('login-title-text');
       const loginBtn = document.getElementById('login-action-btn');
-
-      // 图标定义
-      const menuIconSvg = '<svg viewBox="0 0 24 24"><path d="M4 18h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1zm0-5h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1zM3 7c0 .55.45 1 1 1h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1z"/></svg>';
-      const closeIconSvg = '<svg viewBox="0 0 24 24"><path d="M18.3 5.71a.996.996 0 0 0-1.41 0L12 10.59 7.11 5.7a.996.996 0 1 0-1.41 1.41L10.59 12 5.7 16.89a.996.996 0 1 0 1.41 1.41L12 13.41l4.89 4.89a.996.996 0 1 0 1.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z"/></svg>';
-      
-      // 初始化图标
-      if(fabMain) fabMain.innerHTML = menuIconSvg;
-
-      // ========================================================
-      // 2. 用户系统逻辑 (登录、注册、同步、退出)
-      // ========================================================
-      let currentUser = null; 
-      let currentPass = null; 
-      let userSettings = {};  
       let isRegisterMode = false;
 
-      // 页面加载时：检查本地是否有记住的账号
-      const savedUser = localStorage.getItem('ephone_username');
-      const savedPass = localStorage.getItem('ephone_password');
-      if (savedUser && savedPass) {
-          silentLogin(savedUser, savedPass);
-      }
-
-      // 切换 登录/注册 模式
+      // 切换注册/登录模式
       function toggleRegisterMode() {
         isRegisterMode = !isRegisterMode;
-        const toggleText = document.querySelector('.login-toggle-text');
         if (isRegisterMode) {
             loginTitle.innerText = "REGISTER";
             loginBtn.innerText = "CREATE";
-            if(toggleText) toggleText.innerText = "返回登录";
+            document.querySelector('.login-toggle-text').innerText = "返回登录";
         } else {
             loginTitle.innerText = "LOGIN";
             loginBtn.innerText = "UNLOCK";
-            if(toggleText) toggleText.innerText = "没有账号？点此注册";
+            document.querySelector('.login-toggle-text').innerText = "没有账号？点此注册";
         }
         loginErrorMsg.classList.remove('show');
       }
 
-      // 处理登录或注册请求
+      // 处理认证 (登录或注册)
       async function handleAuth() {
         const username = loginUserInput.value.trim();
         const pwd = loginPwdInput.value.trim();
+        
         if (!username || !pwd) {
             showError("请输入账号和密码");
             return;
@@ -849,79 +841,57 @@
             if (isRegisterMode) {
                 alert("注册成功！请直接登录。");
                 toggleRegisterMode();
-                // 自动填入
                 loginUserInput.value = username;
                 loginPwdInput.value = pwd;
             } else {
-                // 登录成功
+                // ★ 登录成功：保存状态
                 currentUser = username;
                 currentPass = pwd;
-                userSettings = data.userData || {};
-                
-                // 记住账号密码
-                localStorage.setItem('ephone_username', username);
-                localStorage.setItem('ephone_password', pwd);
+                userSettings = data.userData || {}; // 获取云端数据
                 
                 unlockSuccess();
-                applyUserData(); // 恢复上次的状态
             }
           } else {
             showError(data.message);
           }
         } catch (e) {
             showError("连接服务器失败");
-            console.error(e);
+            console.error("Auth Error:", e);
         }
       }
 
-      // 静默登录 (刷新页面后自动重连)
-      async function silentLogin(u, p) {
-          try {
-              const res = await fetch('/api/login', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ username: u, password: p })
-              });
-              const data = await res.json();
-              if (data.success) {
-                  currentUser = u;
-                  currentPass = p;
-                  userSettings = data.userData || {};
-                  unlockSuccess();
-                  applyUserData();
-              }
-          } catch(e) { console.log("Silent login failed"); }
+      function unlockSuccess() {
+        loginOverlay.classList.add('unlocked');
+        localStorage.setItem('ephone_unlocked', 'true');
       }
 
+      function showError(msg) {
+        loginErrorMsg.innerText = msg;
+        loginErrorMsg.classList.add('show');
+        setTimeout(() => {
+          loginErrorMsg.classList.remove('show');
+        }, 2000);
+      }
+      
       // 退出登录
       function handleLogout() {
           if(confirm("确定要退出当前账号吗？")) {
               currentUser = null;
               currentPass = null;
               userSettings = {};
-              localStorage.removeItem('ephone_username');
-              localStorage.removeItem('ephone_password');
-              location.reload(); // 刷新页面重置
+              localStorage.removeItem('ephone_unlocked');
+              location.reload(); // 刷新页面最干净
           }
       }
 
-      function unlockSuccess() {
-        loginOverlay.classList.add('unlocked');
-      }
+      // 回车登录
+      loginPwdInput.addEventListener('keypress', function(e) {
+        if(e.key === 'Enter') handleAuth();
+      });
 
-      function showError(msg) {
-        if(!loginErrorMsg) return;
-        loginErrorMsg.innerText = msg;
-        loginErrorMsg.classList.add('show');
-        setTimeout(() => loginErrorMsg.classList.remove('show'), 2000);
-      }
-
-      // 监听回车键登录
-      if(loginPwdInput) {
-          loginPwdInput.addEventListener('keypress', function(e) {
-            if(e.key === 'Enter') handleAuth();
-          });
-      }
+      // ===========================
+      // 2. 数据同步核心 (关键部分)
+      // ===========================
 
       // 上传数据到 VPS
       async function uploadUserData() {
@@ -936,87 +906,94 @@
                       data: userSettings 
                   })
               });
-              console.log("状态已同步到云端");
-          } catch (e) { console.error("Save failed", e); }
+              console.log("云端同步成功");
+          } catch (e) { console.error("同步失败", e); }
       }
 
-      // 应用用户数据
-      function applyUserData() {
-          // 如果有上次打开App的记录，可以自动恢复（可选）
-          // if (userSettings.lastApp) openApp(userSettings.lastApp);
-      }
+      // 监听子网页发来的数据 (EXPORT_DATA)
+      window.addEventListener('message', (event) => {
+          const data = event.data;
+          // 如果收到子网页请求保存数据
+          if (data && data.type === 'EXPORT_DATA' && currentUser) {
+              const appId = data.appId; // 'app-a' 或 'app-b'
+              if (appId) {
+                  console.log(`收到 ${appId} 的新数据，正在上传...`);
+                  // 更新内存数据
+                  userSettings[appId] = data.payload;
+                  // 上传到 VPS
+                  uploadUserData();
+              }
+          }
+      });
 
-      // ========================================================
-      // 3. 应用操作逻辑 (打开APP、回主页)
-      // ========================================================
-
+      // ===========================
+      // 3. App 窗口管理 (含注入逻辑)
+      // ===========================
+      
       function openApp(frameId) {
         document.body.classList.add('app-open');
-
-        // 隐藏主屏幕
-        if(launcherScreen) {
-            launcherScreen.style.opacity = '0';
-            launcherScreen.style.transform = 'scale(0.95)';
-        }
+        launcherScreen.style.opacity = '0';
+        launcherScreen.style.transform = 'scale(0.95)';
 
         frames.forEach(frame => {
           if (frame.id === frameId) {
-            // 激活当前 App
             frame.style.display = 'flex';
             setTimeout(() => frame.classList.add('active'), 10);
 
             const iframe = frame.querySelector('iframe');
-            if (iframe && iframe.dataset.src) {
+            
+            // 懒加载 iframe
+            if (iframe && iframe.dataset.src && !iframe.getAttribute('src')) {
               iframe.src = iframe.dataset.src;
             }
+
+            // ★★★ 核心：向子网页注入云端数据 (IMPORT_DATA) ★★★
+            if (currentUser && iframe) {
+                const sendCloudData = () => {
+                    const appData = userSettings[frameId] || {}; // 取出该APP的数据
+                    console.log(`向 ${frameId} 发送云端存档...`);
+                    iframe.contentWindow.postMessage({
+                        type: 'IMPORT_DATA',
+                        payload: appData
+                    }, '*');
+                };
+
+                // 如果 iframe 正在加载，等加载完再发
+                iframe.onload = sendCloudData;
+                
+                // 如果已经加载过了，直接发
+                if (iframe.contentWindow) {
+                    // 稍微延迟一下确保子页面脚本准备好了
+                    setTimeout(sendCloudData, 500); 
+                }
+            }
+
           } else {
-            // 关闭其他 App
             frame.classList.remove('active');
             frame.style.display = 'none';
-            const iframe = frame.querySelector('iframe');
-            if (iframe) iframe.src = ''; 
           }
         });
         closeMenu();
-
-        // ★★★ 记录状态并保存到VPS ★★★
-        if (currentUser) {
-            userSettings.lastApp = frameId;
-            uploadUserData();
-        }
       }
 
       function goHome() {
         document.body.classList.remove('app-open');
+        launcherScreen.style.opacity = '1';
+        launcherScreen.style.transform = 'scale(1)';
 
-        // 恢复主屏幕
-        if(launcherScreen) {
-            launcherScreen.style.opacity = '1';
-            launcherScreen.style.transform = 'scale(1)';
-        }
-
-        // 关闭所有 App
         setTimeout(() => {
           frames.forEach(frame => {
             frame.classList.remove('active');
             frame.style.display = 'none';
-            const iframe = frame.querySelector('iframe');
-            if (iframe) iframe.src = '';
+            // 不清空 src，保持后台运行状态
           });
         }, 300);
         closeMenu();
-
-        // ★★★ 记录回到主页并保存 ★★★
-        if (currentUser) {
-            userSettings.lastApp = null;
-            uploadUserData();
-        }
       }
 
-      // ========================================================
-      // 4. 菜单与交互逻辑 (FAB, 拖拽, 隐藏)
-      // ========================================================
-
+      // ===========================
+      // 4. 悬浮按钮 (FAB) 逻辑
+      // ===========================
       function hideFab() {
         closeMenu();
         const mainRect = fabMain.getBoundingClientRect();
@@ -1033,12 +1010,9 @@
       }
 
       function showToast(text) {
-        if(!toastMsg) return;
         toastMsg.innerText = text;
         toastMsg.classList.add('show');
-        setTimeout(() => {
-          toastMsg.classList.remove('show');
-        }, 3000);
+        setTimeout(() => toastMsg.classList.remove('show'), 3000);
       }
 
       function toggleMenu() {
@@ -1051,56 +1025,36 @@
           }, 50);
           return;
         }
-
         fabContainer.classList.toggle('menu-open');
         fabMain.classList.toggle('expanded');
-
-        if (fabMain.classList.contains('expanded')) {
-          fabMain.innerHTML = closeIconSvg;
-        } else {
-          fabMain.innerHTML = menuIconSvg;
-        }
+        fabMain.innerHTML = fabMain.classList.contains('expanded') ? closeIconSvg : menuIconSvg;
       }
 
       function closeMenu() {
-        if(fabContainer) fabContainer.classList.remove('menu-open');
-        if(fabMain) {
-            fabMain.classList.remove('expanded');
-            fabMain.innerHTML = menuIconSvg;
-        }
+        fabContainer.classList.remove('menu-open');
+        fabMain.classList.remove('expanded');
+        fabMain.innerHTML = menuIconSvg;
       }
 
       document.addEventListener('click', e => {
-        if (fabContainer && !fabContainer.contains(e.target) && fabContainer.classList.contains('menu-open')) {
+        if (!fabContainer.contains(e.target) && fabContainer.classList.contains('menu-open')) {
           closeMenu();
         }
       });
 
-      // --- 拖拽功能 ---
-      let isDragging = false;
-      let hasMoved = false;
+      // 拖拽逻辑
+      let isDragging = false, hasMoved = false;
       let startX, startY, initialLeft, initialTop;
       const dragThreshold = 5;
 
-      if(fabMain) {
-          fabMain.addEventListener('mousedown', startDrag);
-          fabMain.addEventListener('touchstart', startDrag, { passive: false });
-          
-          fabMain.addEventListener('click', e => {
-            e.stopPropagation();
-            if (!hasMoved) {
-              toggleMenu();
-            }
-          });
-      }
+      fabMain.addEventListener('mousedown', startDrag);
+      fabMain.addEventListener('touchstart', startDrag, { passive: false });
 
       function startDrag(e) {
         if (fabContainer.classList.contains('ghost-mode')) return;
         if (fabContainer.classList.contains('menu-open')) closeMenu();
-
         isDragging = true;
         hasMoved = false;
-
         if (e.type === 'touchstart') {
           startX = e.touches[0].clientX;
           startY = e.touches[0].clientY;
@@ -1108,16 +1062,13 @@
           startX = e.clientX;
           startY = e.clientY;
         }
-
         const rect = fabContainer.getBoundingClientRect();
         initialLeft = rect.left;
         initialTop = rect.top;
-
         fabContainer.style.bottom = 'auto';
         fabContainer.style.right = 'auto';
         fabContainer.style.left = initialLeft + 'px';
         fabContainer.style.top = initialTop + 'px';
-
         document.addEventListener('mousemove', onDrag);
         document.addEventListener('touchmove', onDrag, { passive: false });
         document.addEventListener('mouseup', stopDrag);
@@ -1127,7 +1078,6 @@
       function onDrag(e) {
         if (!isDragging) return;
         e.preventDefault();
-
         let clientX, clientY;
         if (e.type === 'touchmove') {
           clientX = e.touches[0].clientX;
@@ -1136,14 +1086,9 @@
           clientX = e.clientX;
           clientY = e.clientY;
         }
-
         const deltaX = clientX - startX;
         const deltaY = clientY - startY;
-
-        if (Math.abs(deltaX) > dragThreshold || Math.abs(deltaY) > dragThreshold) {
-          hasMoved = true;
-        }
-
+        if (Math.abs(deltaX) > dragThreshold || Math.abs(deltaY) > dragThreshold) hasMoved = true;
         fabContainer.style.left = initialLeft + deltaX + 'px';
         fabContainer.style.top = initialTop + deltaY + 'px';
       }
@@ -1156,24 +1101,26 @@
         document.removeEventListener('touchend', stopDrag);
       }
 
-      // SW 注册与双击唤醒
+      fabMain.addEventListener('click', e => {
+        e.stopPropagation();
+        if (!hasMoved) toggleMenu();
+      });
+
+      // SW 注册 & 双击唤醒
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          // 双击唤醒 (PC)
           document.addEventListener('dblclick', () => {
             if (fabContainer.classList.contains('ghost-mode')) {
               showFab();
               showToast('已唤出菜单');
             }
           });
-
-          // 双击唤醒 (Mobile)
           let lastTapTime = 0;
           document.addEventListener('touchend', e => {
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTapTime;
             if (tapLength < 300 && tapLength > 0) {
-              if (fabContainer && fabContainer.classList.contains('ghost-mode')) {
+              if (fabContainer.classList.contains('ghost-mode')) {
                 showFab();
                 showToast('已唤出菜单');
                 e.preventDefault();
@@ -1181,7 +1128,7 @@
             }
             lastTapTime = currentTime;
           });
-          navigator.serviceWorker.register('sw.js');
+          navigator.serviceWorker.register('sw.js').catch(e => console.log('SW fail', e));
         });
       }
     </script>
