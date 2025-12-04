@@ -931,61 +931,26 @@
       // ===========================
       
       // 打开 App 的函数 (已修改：发送 username 防止死循环)
-      function openApp(frameId) {
+function openApp(frameId) {
         document.body.classList.add('app-open');
-        
-        // 隐藏主屏幕
         launcherScreen.style.opacity = '0';
         launcherScreen.style.transform = 'scale(0.95)';
 
         frames.forEach(frame => {
           if (frame.id === frameId) {
-            // 1. 显示当前 App 窗口
             frame.style.display = 'flex';
             setTimeout(() => frame.classList.add('active'), 10);
             
             const iframe = frame.querySelector('iframe');
-            
-            // 2. 如果 iframe 还没加载 src，加载它
+            // 只要加载网页，网页自己就会发 APP_READY 过来要数据
             if (iframe && iframe.dataset.src && !iframe.getAttribute('src')) {
                 iframe.src = iframe.dataset.src;
             }
-
-            // 3. ★★★ 核心修改：发送数据 + 发送用户名 ★★★
-            // 只有当用户登录了 (currentUser 存在)，才执行同步
-            if (currentUser && iframe) {
-                
-                // 定义发送函数，避免重复写代码
-                const sendSyncMessage = () => {
-                    const appData = userSettings[frameId] || {}; // 获取该 App 的存档
-                    console.log(`正在向 ${frameId} 同步数据... 用户: ${currentUser}`);
-                    
-                    iframe.contentWindow.postMessage({
-                        type: 'IMPORT_DATA',
-                        payload: appData,
-                        username: currentUser // <--- 这里就是关键新增的字段！
-                    }, '*');
-                };
-
-                // 情况A: iframe 正在加载，等它加载完再发
-                iframe.onload = sendSyncMessage;
-                
-                // 情况B: iframe 已经加载完了（比如第二次打开），直接发
-                // 稍微延迟一点点确保通信通道就绪
-                setTimeout(() => {
-                    if (iframe.contentWindow) {
-                        sendSyncMessage();
-                    }
-                }, 100);
-            }
-
           } else {
-            // 隐藏其他 App
             frame.classList.remove('active');
             frame.style.display = 'none';
           }
         });
-        
         closeMenu();
       }
   
@@ -1144,6 +1109,48 @@
           navigator.serviceWorker.register('sw.js').catch(e => console.log('SW fail', e));
         });
       }
+
+  // ==========================================
+      // ★★★ 中央数据交换中心 (处理所有子网页消息) ★★★
+      // ==========================================
+      window.addEventListener('message', (event) => {
+          const data = event.data;
+          if (!data || !data.type) return;
+
+          // 情况 1: 子网页加载好了，来要数据 (APP_READY)
+          if (data.type === 'APP_READY') {
+              const appId = data.appId;
+              
+              // 只有登录了才给数据，没登录就给个空对象(达到清空效果)
+              // userSettings 是登录成功后从 VPS 获取的那个大对象
+              const myData = (currentUser && userSettings[appId]) ? userSettings[appId] : {};
+              
+              console.log(`收到 ${appId} 的就绪信号，正在发送数据...`);
+              
+              // 找到发送请求的那个 iframe 窗口，把数据发回去
+              // event.source 就是子网页的 window 对象
+              event.source.postMessage({
+                  type: 'IMPORT_DATA',
+                  payload: myData
+              }, '*');
+          }
+
+          // 情况 2: 子网页数据变了，请求保存 (EXPORT_DATA)
+          if (data.type === 'EXPORT_DATA') {
+              if (!currentUser) return; // 没登录不许保存
+
+              const appId = data.appId;
+              const newData = data.payload;
+
+              console.log(`收到 ${appId} 的新数据，正在保存到VPS...`);
+              
+              // 1. 更新内存
+              userSettings[appId] = newData;
+              
+              // 2. 上传到 VPS
+              uploadUserData();
+          }
+      });
     </script>
   </body>
 </html>
