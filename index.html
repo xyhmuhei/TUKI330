@@ -632,26 +632,20 @@
     </script>
   </head>
   <body>
-<!-- 登录锁屏遮罩 -->
+    
+<!-- 假登陆锁屏遮罩 -->
     <div id="login-overlay">
       <div class="login-box">
-        <div class="login-title" id="login-title-text">LOGIN</div>
+        <div class="login-title">SYSTEM LOCKED</div>
         
-        <!-- 账号输入框 -->
-        <input type="text" id="login-user" class="login-input" placeholder="Username" autocomplete="off" />
-        
-        <!-- 密码输入框 -->
-        <input type="password" id="login-pwd" class="login-input" placeholder="Password" maxlength="20" />
+        <!-- 只保留密码框 -->
+        <input type="password" id="login-pwd" class="login-input" placeholder="Enter Passcode" maxlength="20" />
         
         <br />
-        <button class="login-btn" id="login-action-btn" onclick="handleAuth()">UNLOCK</button>
+        <!-- 按钮调用 attemptLogin -->
+        <button class="login-btn" onclick="attemptLogin()">UNLOCK</button>
         
-        <div class="login-error" id="login-error-msg">Error Message</div>
-        
-        <!-- 切换登录/注册 -->
-        <div class="login-toggle-text" onclick="toggleRegisterMode()">
-          没有账号？点此注册
-        </div>
+        <div class="login-error" id="login-error-msg">Incorrect Passcode</div>
       </div>
     </div>
 
@@ -771,167 +765,77 @@
 
 <script>
       // ===========================
-      // 0. 全局变量
+      // 1. 全局配置与变量
       // ===========================
+      const FAKE_PASSWORD = "123"; // ★在这里设置你的假密码★
+      let globalSettings = {};     // 存放从VPS拉取的所有数据
+      
+      const loginOverlay = document.getElementById('login-overlay');
+      const loginPwdInput = document.getElementById('login-pwd');
+      const loginErrorMsg = document.getElementById('login-error-msg');
+      
       const fabContainer = document.getElementById('fab-container');
       const fabMain = document.getElementById('fab-main');
       const launcherScreen = document.getElementById('home-screen');
       const frames = document.querySelectorAll('.app-frame');
       const toastMsg = document.getElementById('toast-msg');
 
-      // 图标 SVG
       const menuIconSvg = '<svg viewBox="0 0 24 24"><path d="M4 18h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1zm0-5h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1zM3 7c0 .55.45 1 1 1h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1z"/></svg>';
       const closeIconSvg = '<svg viewBox="0 0 24 24"><path d="M18.3 5.71a.996.996 0 0 0-1.41 0L12 10.59 7.11 5.7a.996.996 0 1 0-1.41 1.41L10.59 12 5.7 16.89a.996.996 0 1 0 1.41 1.41L12 13.41l4.89 4.89a.996.996 0 1 0 1.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z"/></svg>';
-      
+
       fabMain.innerHTML = menuIconSvg;
 
-      // 用户状态
-      let currentUser = null;
-      let currentPass = null;
-      let userSettings = {}; // 存放从VPS拉下来的所有APP数据
-
       // ===========================
-      // 1. 登录与注册系统
+      // 2. 自动加载数据 (网页一打开就开始)
       // ===========================
-      const loginOverlay = document.getElementById('login-overlay');
-      const loginUserInput = document.getElementById('login-user');
-      const loginPwdInput = document.getElementById('login-pwd');
-      const loginErrorMsg = document.getElementById('login-error-msg');
-      const loginTitle = document.getElementById('login-title-text');
-      const loginBtn = document.getElementById('login-action-btn');
-      let isRegisterMode = false;
-
-      // 切换注册/登录模式
-      function toggleRegisterMode() {
-        isRegisterMode = !isRegisterMode;
-        if (isRegisterMode) {
-            loginTitle.innerText = "REGISTER";
-            loginBtn.innerText = "CREATE";
-            document.querySelector('.login-toggle-text').innerText = "返回登录";
-        } else {
-            loginTitle.innerText = "LOGIN";
-            loginBtn.innerText = "UNLOCK";
-            document.querySelector('.login-toggle-text').innerText = "没有账号？点此注册";
-        }
-        loginErrorMsg.classList.remove('show');
-      }
-
-      // 处理认证 (登录或注册)
-      async function handleAuth() {
-        const username = loginUserInput.value.trim();
-        const pwd = loginPwdInput.value.trim();
-        
-        if (!username || !pwd) {
-            showError("请输入账号和密码");
-            return;
-        }
-
-        const endpoint = isRegisterMode ? '/api/register' : '/api/login';
-
-        try {
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: username, password: pwd })
-          });
-          
-          const data = await response.json();
-          
-          if (data.success) {
-            if (isRegisterMode) {
-                alert("注册成功！请直接登录。");
-                toggleRegisterMode();
-                loginUserInput.value = username;
-                loginPwdInput.value = pwd;
-            } else {
-                // ★ 登录成功：保存状态
-                currentUser = username;
-                currentPass = pwd;
-                userSettings = data.userData || {}; // 获取云端数据
-                
-                unlockSuccess();
-            }
-          } else {
-            showError(data.message);
-          }
-        } catch (e) {
-            showError("连接服务器失败");
-            console.error("Auth Error:", e);
-        }
-      }
-
-      function unlockSuccess() {
-        loginOverlay.classList.add('unlocked');
-        localStorage.setItem('ephone_unlocked', 'true');
-      }
-
-      function showError(msg) {
-        loginErrorMsg.innerText = msg;
-        loginErrorMsg.classList.add('show');
-        setTimeout(() => {
-          loginErrorMsg.classList.remove('show');
-        }, 2000);
-      }
-      
-      // 退出登录
-      function handleLogout() {
-          if(confirm("确定要退出当前账号吗？")) {
-              currentUser = null;
-              currentPass = null;
-              userSettings = {};
-              localStorage.removeItem('ephone_unlocked');
-              location.reload(); // 刷新页面最干净
-          }
-      }
-
-      // 回车登录
-      loginPwdInput.addEventListener('keypress', function(e) {
-        if(e.key === 'Enter') handleAuth();
-      });
-
-      // ===========================
-      // 2. 数据同步核心 (关键部分)
-      // ===========================
-
-      // 上传数据到 VPS
-      async function uploadUserData() {
-          if (!currentUser) return;
+      async function loadGlobalData() {
           try {
-              await fetch('/api/save_data', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ 
-                      username: currentUser, 
-                      password: currentPass,
-                      data: userSettings 
-                  })
-              });
-              console.log("云端同步成功");
-          } catch (e) { console.error("同步失败", e); }
+              console.log("正在从VPS加载全局数据...");
+              const res = await fetch('/api/global_data');
+              globalSettings = await res.json();
+              console.log("数据加载成功:", globalSettings);
+          } catch (e) {
+              console.error("加载数据失败，可能网络不通", e);
+          }
+      }
+      // 立即执行加载
+      loadGlobalData();
+
+      // ===========================
+      // 3. 假登陆逻辑
+      // ===========================
+      
+      // 如果之前解锁过（刷新页面），保持解锁状态
+      if (sessionStorage.getItem('is_unlocked')) {
+          loginOverlay.classList.add('unlocked');
       }
 
-      // 监听子网页发来的数据 (EXPORT_DATA)
-      window.addEventListener('message', (event) => {
-          const data = event.data;
-          // 如果收到子网页请求保存数据
-          if (data && data.type === 'EXPORT_DATA' && currentUser) {
-              const appId = data.appId; // 'app-a' 或 'app-b'
-              if (appId) {
-                  console.log(`收到 ${appId} 的新数据，正在上传...`);
-                  // 更新内存数据
-                  userSettings[appId] = data.payload;
-                  // 上传到 VPS
-                  uploadUserData();
-              }
-          }
+      function attemptLogin() {
+        const pwd = loginPwdInput.value;
+        
+        // 纯前端判断，骗骗朋友用的
+        if (pwd === FAKE_PASSWORD) {
+            loginOverlay.classList.add('unlocked');
+            sessionStorage.setItem('is_unlocked', 'true');
+        } else {
+            loginErrorMsg.classList.add('show');
+            loginPwdInput.value = '';
+            setTimeout(() => {
+                loginErrorMsg.classList.remove('show');
+            }, 1000);
+        }
+      }
+      
+      // 回车键解锁
+      loginPwdInput.addEventListener('keypress', (e) => {
+          if(e.key === 'Enter') attemptLogin();
       });
 
       // ===========================
-      // 3. App 窗口管理 (含注入逻辑)
+      // 4. App 打开与数据同步逻辑
       // ===========================
       
-      // 打开 App 的函数 (已修改：发送 username 防止死循环)
-function openApp(frameId) {
+      function openApp(frameId) {
         document.body.classList.add('app-open');
         launcherScreen.style.opacity = '0';
         launcherScreen.style.transform = 'scale(0.95)';
@@ -942,7 +846,6 @@ function openApp(frameId) {
             setTimeout(() => frame.classList.add('active'), 10);
             
             const iframe = frame.querySelector('iframe');
-            // 只要加载网页，网页自己就会发 APP_READY 过来要数据
             if (iframe && iframe.dataset.src && !iframe.getAttribute('src')) {
                 iframe.src = iframe.dataset.src;
             }
@@ -953,7 +856,7 @@ function openApp(frameId) {
         });
         closeMenu();
       }
-  
+
       function goHome() {
         document.body.classList.remove('app-open');
         launcherScreen.style.opacity = '1';
@@ -963,15 +866,51 @@ function openApp(frameId) {
           frames.forEach(frame => {
             frame.classList.remove('active');
             frame.style.display = 'none';
-            // 不清空 src，保持后台运行状态
+            // 不清空 src，保持后台运行体验更好
           });
         }, 300);
         closeMenu();
       }
 
+      // ★★★ 中央数据处理中心 ★★★
+      window.addEventListener('message', (event) => {
+          const data = event.data;
+          if (!data || !data.type) return;
+
+          // 子网页请求数据
+          if (data.type === 'APP_READY') {
+              const appId = data.appId;
+              const appData = globalSettings[appId] || {};
+              
+              console.log(`[主程序] 发送数据给 ${appId}`);
+              event.source.postMessage({
+                  type: 'IMPORT_DATA',
+                  payload: appData
+              }, '*');
+          }
+
+          // 子网页保存数据
+          if (data.type === 'EXPORT_DATA') {
+              const appId = data.appId;
+              const newData = data.payload;
+              
+              // 1. 更新内存
+              globalSettings[appId] = newData;
+
+              // 2. 发送给 VPS
+              console.log(`[主程序] 同步 ${appId} 到 VPS`);
+              fetch('/api/save_global', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ appId: appId, data: newData })
+              });
+          }
+      });
+
       // ===========================
-      // 4. 悬浮按钮 (FAB) 逻辑
+      // 5. 菜单与 UI 逻辑 (保持不变)
       // ===========================
+      
       function hideFab() {
         closeMenu();
         const mainRect = fabMain.getBoundingClientRect();
@@ -990,7 +929,9 @@ function openApp(frameId) {
       function showToast(text) {
         toastMsg.innerText = text;
         toastMsg.classList.add('show');
-        setTimeout(() => toastMsg.classList.remove('show'), 3000);
+        setTimeout(() => {
+          toastMsg.classList.remove('show');
+        }, 3000);
       }
 
       function toggleMenu() {
@@ -1003,6 +944,7 @@ function openApp(frameId) {
           }, 50);
           return;
         }
+
         fabContainer.classList.toggle('menu-open');
         fabMain.classList.toggle('expanded');
         fabMain.innerHTML = fabMain.classList.contains('expanded') ? closeIconSvg : menuIconSvg;
@@ -1014,16 +956,16 @@ function openApp(frameId) {
         fabMain.innerHTML = menuIconSvg;
       }
 
+      // 点击外部关闭菜单
       document.addEventListener('click', e => {
         if (!fabContainer.contains(e.target) && fabContainer.classList.contains('menu-open')) {
           closeMenu();
         }
       });
 
-      // 拖拽逻辑
+      // 拖拽功能
       let isDragging = false, hasMoved = false;
       let startX, startY, initialLeft, initialTop;
-      const dragThreshold = 5;
 
       fabMain.addEventListener('mousedown', startDrag);
       fabMain.addEventListener('touchstart', startDrag, { passive: false });
@@ -1031,8 +973,10 @@ function openApp(frameId) {
       function startDrag(e) {
         if (fabContainer.classList.contains('ghost-mode')) return;
         if (fabContainer.classList.contains('menu-open')) closeMenu();
+
         isDragging = true;
         hasMoved = false;
+
         if (e.type === 'touchstart') {
           startX = e.touches[0].clientX;
           startY = e.touches[0].clientY;
@@ -1040,13 +984,16 @@ function openApp(frameId) {
           startX = e.clientX;
           startY = e.clientY;
         }
+
         const rect = fabContainer.getBoundingClientRect();
         initialLeft = rect.left;
         initialTop = rect.top;
+
         fabContainer.style.bottom = 'auto';
         fabContainer.style.right = 'auto';
         fabContainer.style.left = initialLeft + 'px';
         fabContainer.style.top = initialTop + 'px';
+
         document.addEventListener('mousemove', onDrag);
         document.addEventListener('touchmove', onDrag, { passive: false });
         document.addEventListener('mouseup', stopDrag);
@@ -1056,6 +1003,7 @@ function openApp(frameId) {
       function onDrag(e) {
         if (!isDragging) return;
         e.preventDefault();
+        
         let clientX, clientY;
         if (e.type === 'touchmove') {
           clientX = e.touches[0].clientX;
@@ -1064,9 +1012,14 @@ function openApp(frameId) {
           clientX = e.clientX;
           clientY = e.clientY;
         }
+
         const deltaX = clientX - startX;
         const deltaY = clientY - startY;
-        if (Math.abs(deltaX) > dragThreshold || Math.abs(deltaY) > dragThreshold) hasMoved = true;
+
+        if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+          hasMoved = true;
+        }
+
         fabContainer.style.left = initialLeft + deltaX + 'px';
         fabContainer.style.top = initialTop + deltaY + 'px';
       }
@@ -1084,15 +1037,15 @@ function openApp(frameId) {
         if (!hasMoved) toggleMenu();
       });
 
-      // SW 注册 & 双击唤醒
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
+      // 唤醒逻辑
+      window.addEventListener('load', () => {
           document.addEventListener('dblclick', () => {
             if (fabContainer.classList.contains('ghost-mode')) {
               showFab();
               showToast('已唤出菜单');
             }
           });
+
           let lastTapTime = 0;
           document.addEventListener('touchend', e => {
             const currentTime = new Date().getTime();
@@ -1106,51 +1059,12 @@ function openApp(frameId) {
             }
             lastTapTime = currentTime;
           });
-          navigator.serviceWorker.register('sw.js').catch(e => console.log('SW fail', e));
-        });
-      }
-
-  // ==========================================
-      // ★★★ 中央数据交换中心 (处理所有子网页消息) ★★★
-      // ==========================================
-      window.addEventListener('message', (event) => {
-          const data = event.data;
-          if (!data || !data.type) return;
-
-          // 情况 1: 子网页加载好了，来要数据 (APP_READY)
-          if (data.type === 'APP_READY') {
-              const appId = data.appId;
-              
-              // 只有登录了才给数据，没登录就给个空对象(达到清空效果)
-              // userSettings 是登录成功后从 VPS 获取的那个大对象
-              const myData = (currentUser && userSettings[appId]) ? userSettings[appId] : {};
-              
-              console.log(`收到 ${appId} 的就绪信号，正在发送数据...`);
-              
-              // 找到发送请求的那个 iframe 窗口，把数据发回去
-              // event.source 就是子网页的 window 对象
-              event.source.postMessage({
-                  type: 'IMPORT_DATA',
-                  payload: myData
-              }, '*');
-          }
-
-          // 情况 2: 子网页数据变了，请求保存 (EXPORT_DATA)
-          if (data.type === 'EXPORT_DATA') {
-              if (!currentUser) return; // 没登录不许保存
-
-              const appId = data.appId;
-              const newData = data.payload;
-
-              console.log(`收到 ${appId} 的新数据，正在保存到VPS...`);
-              
-              // 1. 更新内存
-              userSettings[appId] = newData;
-              
-              // 2. 上传到 VPS
-              uploadUserData();
+          
+          if ('serviceWorker' in navigator) {
+             navigator.serviceWorker.register('sw.js');
           }
       });
     </script>
+    
   </body>
 </html>
