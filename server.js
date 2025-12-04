@@ -1,45 +1,85 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const app = express();
 const bodyParser = require('body-parser');
 
-// ===========================
-// 配置区域
-// ===========================
-const MY_SECRET_PASSWORD = "admin"; // 记得改成你的密码
 const PORT = 7000;
 
-// ★★★ 关键修改：定义另外两个仓库在 VPS 上的文件夹名字 ★★★
-// 假设你稍后会把仓库克隆到 EPhone 的隔壁，名字分别是 site330 和 sitetuk
+// 定义子应用路径 (保持你之前的设置)
 const PATH_TO_330 = '../site330'; 
 const PATH_TO_TUK = '../sitetuk';
-// ===========================
+
+// 用户数据文件路径
+const USERS_FILE = path.join(__dirname, 'users.json');
 
 app.use(bodyParser.json());
-
-// 1. 托管 EPhone 自己的静态文件
 app.use(express.static(path.join(__dirname, '/')));
 
-// 2. ★★★ 核心魔法：把隔壁文件夹挂载成虚拟路径 ★★★
-// 当浏览器访问 /site330 时，读取 ../site330 文件夹的内容
+// 挂载子应用
 app.use('/site330', express.static(path.join(__dirname, PATH_TO_330)));
-
-// 当浏览器访问 /sitetuk 时，读取 ../sitetuk 文件夹的内容
 app.use('/sitetuk', express.static(path.join(__dirname, PATH_TO_TUK)));
 
+// --- 辅助函数：读写用户数据 ---
+function getUsers() {
+    if (!fs.existsSync(USERS_FILE)) {
+        // 如果文件不存在，初始化为空数组
+        fs.writeFileSync(USERS_FILE, '[]'); 
+        return [];
+    }
+    try {
+        const data = fs.readFileSync(USERS_FILE, 'utf8');
+        return JSON.parse(data);
+    } catch (e) {
+        return [];
+    }
+}
 
-// 登录接口
+function saveUser(userObj) {
+    const users = getUsers();
+    // 检查用户名是否已存在
+    const exists = users.find(u => u.username === userObj.username);
+    if (exists) return false;
+
+    users.push(userObj);
+    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+    return true;
+}
+
+// --- API 接口 ---
+
+// 1. 注册接口
+app.post('/api/register', (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) {
+        return res.json({ success: false, message: "账号密码不能为空" });
+    }
+
+    const success = saveUser({ username, password });
+    if (success) {
+        console.log(`新用户注册: ${username}`);
+        res.json({ success: true, message: "注册成功，请登录" });
+    } else {
+        res.json({ success: false, message: "用户名已存在" });
+    }
+});
+
+// 2. 登录接口
 app.post('/api/login', (req, res) => {
-    const { password } = req.body;
-    if (password === MY_SECRET_PASSWORD) {
+    const { username, password } = req.body;
+    const users = getUsers();
+    
+    // 查找匹配的用户
+    const validUser = users.find(u => u.username === username && u.password === password);
+
+    if (validUser) {
+        console.log(`用户登录成功: ${username}`);
         res.json({ success: true, message: "Login successful" });
     } else {
-        res.json({ success: false, message: "Invalid password" });
+        res.json({ success: false, message: "账号或密码错误" });
     }
 });
 
 app.listen(PORT, () => {
     console.log(`EPhone 服务启动: http://localhost:${PORT}`);
-    console.log(`挂载子应用 330: ${path.join(__dirname, PATH_TO_330)}`);
-    console.log(`挂载子应用 Tuk: ${path.join(__dirname, PATH_TO_TUK)}`);
 });
