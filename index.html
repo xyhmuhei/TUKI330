@@ -7,7 +7,6 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no"
     />
     <title>EPhone PWA</title>
-    <!-- 引入样式 -->
     <link rel="stylesheet" href="style.css" />
     <link
       rel="apple-touch-icon"
@@ -26,7 +25,7 @@
     <meta name="theme-color" content="#f0f2f5" />
 
     <style>
-      /* --- 核心配色：蜂蜜黄油 & 焦糖复古 --- */
+      /* --- 核心配色 --- */
       :root {
         --bg-color: #fdfbf7;
         --glass-base: rgba(255, 253, 240, 0.65);
@@ -36,22 +35,21 @@
         --text-deep: #5d4037;
         --shadow-warm: 0 15px 30px rgba(210, 180, 140, 0.25);
         --font-main: 'Courier New', Courier, monospace;
-        /* --- 手机适配核心变量 --- */
-        --app-height: 100dvh; /* 优先使用现代浏览器的动态高度 */
+        /* 手机适配变量 */
+        --app-height: 100dvh;
       }
 
       html {
         height: 100%;
         -webkit-text-size-adjust: 100%;
-        overflow: hidden; /* 防止橡皮筋效果 */
+        overflow: hidden;
       }
-
       body {
         margin: 0;
         font-family: var(--font-main);
         font-weight: bold;
-        /* 兼容性处理：如果浏览器不支持dvh，使用JS计算的变量，最后降级到100vh */
-        height: 100vh; 
+        /* 手机全屏适配关键 */
+        height: 100vh;
         height: var(--app-height);
         overflow: hidden;
         background-color: var(--bg-color);
@@ -59,7 +57,7 @@
           linear-gradient(90deg, rgba(230, 206, 172, 0.2) 1px, transparent 1px);
         background-size: 40px 40px;
         color: var(--text-brown);
-        position: fixed; /* 强制固定，防止滚动 */
+        position: fixed; /* 防止滚动 */
         width: 100%;
         top: 0;
         left: 0;
@@ -73,131 +71,6 @@
         position: relative;
         overflow: hidden;
       }
-
-     /* --- 登录锁屏界面 (已更新支持注册) --- */
-      #login-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: #fdfbf7;
-        z-index: 9999; /* 最高层级 */
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-        background-image: radial-gradient(#e6ceac 1px, transparent 1px);
-        background-size: 20px 20px;
-      }
-      
-      #login-overlay.unlocked {
-        transform: translateY(-100%);
-        pointer-events: none;
-      }
-
-      .login-box {
-        background: linear-gradient(to bottom, #fdfbf7 0%, #f4eadd 100%);
-        border: 2px solid #e0d0b8;
-        border-radius: 20px;
-        padding: 40px 30px;
-        box-shadow: 0 15px 35px rgba(141, 110, 99, 0.25);
-        text-align: center;
-        position: relative;
-        /* --- 关键修改点：适应账号+密码输入框 --- */
-        width: 260px; 
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-      
-      /* 锁屏顶部的装饰 */
-      .login-box::before {
-        content: 'SECURITY LOCK';
-        position: absolute;
-        top: -12px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #5d4037;
-        color: #fff;
-        font-size: 10px;
-        padding: 4px 10px;
-        border-radius: 4px;
-        letter-spacing: 1px;
-      }
-
-      .login-title {
-        color: var(--text-deep);
-        font-size: 18px;
-        margin-bottom: 25px;
-        letter-spacing: 2px;
-        font-weight: bold;
-      }
-
-      .login-input {
-        background: #fffdf5;
-        border: 2px solid #e6ceac;
-        padding: 10px 15px;
-        border-radius: 8px;
-        font-family: var(--font-main);
-        font-size: 16px;
-        color: var(--text-deep);
-        width: 220px; /* 宽度调整 */
-        text-align: center;
-        outline: none;
-        margin-bottom: 15px; /* 输入框之间的间距 */
-        transition: 0.3s;
-      }
-      .login-input:focus {
-        border-color: #8d6e63;
-        box-shadow: 0 0 0 4px rgba(141, 110, 99, 0.1);
-      }
-
-      .login-btn {
-        background: #5d4037;
-        color: #fff;
-        border: none;
-        padding: 12px 30px;
-        border-radius: 50px;
-        font-family: var(--font-main);
-        font-weight: bold;
-        font-size: 14px;
-        cursor: pointer;
-        box-shadow: 0 5px 15px rgba(93, 64, 55, 0.3);
-        transition: 0.2s;
-        margin-top: 10px;
-        width: 150px;
-      }
-      .login-btn:active {
-        transform: scale(0.95);
-        box-shadow: 0 2px 5px rgba(93, 64, 55, 0.3);
-      }
-      
-      .login-error {
-        color: #d32f2f;
-        font-size: 12px;
-        height: 20px;
-        margin-top: 10px;
-        opacity: 0;
-        transition: 0.3s;
-      }
-      .login-error.show { opacity: 1; }
-
-      /* --- 新增：切换注册/登录的文字 --- */
-      .login-toggle-text {
-        margin-top: 15px;
-        font-size: 12px;
-        color: var(--text-brown);
-        cursor: pointer;
-        text-decoration: underline;
-        opacity: 0.8;
-      }
-      .login-toggle-text:hover {
-        opacity: 1;
-      }
-      
-      /* --- 原有样式继续 --- */
       .screen {
         width: 100%;
         height: 100%;
@@ -255,10 +128,10 @@
         border-radius: 20px;
         padding: 50px 35px 60px 35px;
         display: flex;
-        gap: 35px; 
+        gap: 35px;
         position: relative;
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -3px 5px rgba(0, 0, 0, 0.05),
-           0 15px 35px rgba(141, 110, 99, 0.25), 0 5px 10px rgba(0, 0, 0, 0.05);
+          0 15px 35px rgba(141, 110, 99, 0.25), 0 5px 10px rgba(0, 0, 0, 0.05);
         align-items: center;
         justify-content: center;
         min-width: 320px;
@@ -305,7 +178,7 @@
       .screw.tr { top: 12px; right: 12px; }
       .screw.bl { bottom: 12px; left: 12px; }
       .screw.br { bottom: 12px; right: 12px; }
-      
+
       .tape-window-bg {
         position: absolute;
         top: 50%;
@@ -373,7 +246,6 @@
         border-top: 1px solid #e0d0b8;
         z-index: 5;
       }
-
       .tape-holes {
         position: absolute;
         bottom: 10px;
@@ -393,7 +265,6 @@
         border-radius: 50%;
         box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.3);
       }
-
       .icon-bg-desktop::after {
         content: '';
         position: absolute;
@@ -404,7 +275,6 @@
         z-index: 5;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
       }
-
       .desktop-app-icon .label {
         font-size: 12px;
         color: var(--text-deep);
@@ -423,6 +293,7 @@
         transform: scale(0.92);
       }
 
+      /* App Window 适配 */
       .app-window {
         width: 100%;
         height: 100%;
@@ -436,7 +307,7 @@
         opacity: 0;
         transform: scale(0.95);
         transition: 0.3s;
-        /* 确保APP内部也能利用全屏，不被底部栏遮挡 */
+        /* 手机底部安全区适配 */
         padding-bottom: env(safe-area-inset-bottom);
         box-sizing: border-box;
       }
@@ -452,10 +323,10 @@
         background: #fff;
       }
 
-      /* Fab Styles */
+      /* 右下角按钮适配 */
       #fab-container {
         position: fixed;
-        /* 增加对iPhone底部横条的适配，避免太靠下 */
+        /* 避免被 iPhone 横条遮挡 */
         bottom: calc(50px + env(safe-area-inset-bottom));
         right: 25px;
         z-index: 1000;
@@ -482,7 +353,6 @@
         transition: 0.4s;
         position: relative;
       }
-
       #fab-main::before {
         content: '';
         position: absolute;
@@ -510,15 +380,18 @@
         position: relative;
         transition: 0.3s;
       }
-
-      #fab-main:active { transform: rotate(15deg) scale(0.95); }
+      #fab-main:active {
+        transform: rotate(15deg) scale(0.95);
+      }
       #fab-main.expanded {
         transform: rotate(90deg);
         background: #fff;
         background-image: none;
       }
       #fab-main.expanded::before,
-      #fab-main.expanded::after { opacity: 0; }
+      #fab-main.expanded::after {
+        opacity: 0;
+      }
 
       .fab-actions {
         position: absolute;
@@ -557,6 +430,7 @@
         border: 1px solid #f0f0f0;
         padding: 0;
         overflow: hidden;
+        background: #fff;
       }
       .fab-mini-btn img {
         width: 100%;
@@ -583,7 +457,9 @@
         opacity: 0;
         pointer-events: none;
       }
-      #fab-container.ghost-mode .fab-actions { display: none; }
+      #fab-container.ghost-mode .fab-actions {
+        display: none;
+      }
 
       #toast-msg {
         position: fixed;
@@ -606,6 +482,7 @@
         transform: translateX(-50%) translateY(0);
       }
 
+      /* 边缘感应层 */
       .edge-sensor {
         position: fixed;
         z-index: 1500;
@@ -615,40 +492,21 @@
       .edge-sensor.bottom { bottom: 0; left: 0; width: 100%; height: 30px; }
       .edge-sensor.left { top: 30px; bottom: 30px; left: 0; width: 15px; }
       .edge-sensor.right { top: 30px; bottom: 30px; right: 0; width: 15px; }
+
     </style>
     
-    <!-- 手机全屏适配 JS (防止地址栏遮挡) -->
+    <!-- JS: 动态计算视口高度，解决手机栏遮挡 -->
     <script>
-      // 核心逻辑：计算实际视口高度，写入CSS变量
       function setAppHeight() {
         const vh = window.innerHeight * 0.01;
         document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
       }
-      // 初始化执行
       setAppHeight();
-      // 监听 resize 和 orientationchange
       window.addEventListener('resize', setAppHeight);
       window.addEventListener('orientationchange', setAppHeight);
     </script>
   </head>
   <body>
-    
-<!-- 假登陆锁屏遮罩 -->
-    <div id="login-overlay">
-      <div class="login-box">
-        <div class="login-title">SYSTEM LOCKED</div>
-        
-        <!-- 只保留密码框 -->
-        <input type="password" id="login-pwd" class="login-input" placeholder="Enter Passcode" maxlength="20" />
-        
-        <br />
-        <!-- 按钮调用 attemptLogin -->
-        <button class="login-btn" onclick="attemptLogin()">UNLOCK</button>
-        
-        <div class="login-error" id="login-error-msg">Incorrect Passcode</div>
-      </div>
-    </div>
-
     <div id="phone-screen">
       <!-- 主屏幕 -->
       <div id="home-screen" class="screen">
@@ -667,7 +525,7 @@
                     </div>
                     <div class="tape-window-bg"></div>
 
-                    <!-- App A -->
+                    <!-- App 330 -->
                     <div class="desktop-app-icon" onclick="openApp('app-a')">
                       <div class="icon-bg-desktop">
                         <img
@@ -678,7 +536,7 @@
                       <span class="label">330</span>
                     </div>
 
-                    <!-- App B -->
+                    <!-- App 兔K -->
                     <div class="desktop-app-icon" onclick="openApp('app-b')">
                       <div class="icon-bg-desktop">
                         <img
@@ -696,54 +554,44 @@
         </div>
       </div>
 
-<!-- App Windows -->
+      <!-- 子应用窗口 -->
       <div id="app-a" class="app-window app-frame">
-        <!-- 这里的 /site330 对应 server.js 里配置的挂载路径 -->
-        <iframe data-src="/site330/index.html" src="" class="app-iframe"></iframe>
+        <iframe data-src="./site330/index.html" src="" class="app-iframe"></iframe>
       </div>
 
       <div id="app-b" class="app-window app-frame">
-        <!-- 这里的 /sitetuk 对应 server.js 里配置的挂载路径 -->
-        <iframe data-src="/sitetuk/index.html" src="" class="app-iframe"></iframe>
+        <iframe data-src="./sitetuk/index.html" src="" class="app-iframe"></iframe>
       </div>
 
       <!-- 悬浮按钮 -->
       <div id="fab-container">
         <div class="fab-actions">
-          <!-- 这里的代码放在 <div class="fab-actions"> 内部 -->
-          
-          <!-- ... 330, 兔K, 隐藏按钮 ... -->
-
-          <!-- ★★★ 新增：退出登录按钮 ★★★ -->
-          <div class="fab-action-btn" onclick="handleLogout()">
-            <span class="fab-label">退出</span>
-            <div class="fab-mini-btn" style="background: #ffebee;"> <!-- 稍微红一点的背景 -->
-              <!-- 退出图标 -->
-              <svg viewBox="0 0 24 24" style="fill: #c62828;">
-                <path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
-              </svg>
-            </div>
-          </div>
-
-          <!-- ... 主页按钮 ... -->
           <div class="fab-action-btn" onclick="openApp('app-a')">
             <span class="fab-label">330</span>
             <div class="fab-mini-btn">
-              <img src="https://s3plus.meituan.net/opapisdk/op_ticket_885190757_1756312261242_qdqqd_g0eriz.jpeg" alt="330" />
+              <img
+                src="https://s3plus.meituan.net/opapisdk/op_ticket_885190757_1756312261242_qdqqd_g0eriz.jpeg"
+                alt="330"
+              />
             </div>
           </div>
+
           <div class="fab-action-btn" onclick="openApp('app-b')">
             <span class="fab-label">兔K</span>
             <div class="fab-mini-btn">
               <img src="https://i.postimg.cc/Kj8JnRcp/267611-CC01-F8-A3-B4910-A2-C2-FFDE479-DC.jpg" alt="兔K" />
             </div>
           </div>
+
           <div class="fab-action-btn" onclick="hideFab()">
             <span class="fab-label">隐藏</span>
             <div class="fab-mini-btn">
-              <svg viewBox="0 0 24 24"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46A11.804 11.804 0 0 0 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>
+              <svg viewBox="0 0 24 24">
+                <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46A11.804 11.804 0 0 0 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>
+              </svg>
             </div>
           </div>
+
           <div class="fab-action-btn" onclick="goHome()">
             <span class="fab-label">主页</span>
             <div class="fab-mini-btn">
@@ -751,10 +599,10 @@
             </div>
           </div>
         </div>
+
         <div id="fab-main"></div>
       </div>
 
-      <!-- 边缘感应 -->
       <div class="edge-sensor top"></div>
       <div class="edge-sensor bottom"></div>
       <div class="edge-sensor left"></div>
@@ -763,78 +611,18 @@
       <div id="toast-msg"></div>
     </div>
 
-<script>
-      // ===========================
-      // 1. 全局配置与变量
-      // ===========================
-      const FAKE_PASSWORD = "123"; // ★在这里设置你的假密码★
-      let globalSettings = {};     // 存放从VPS拉取的所有数据
-      
-      const loginOverlay = document.getElementById('login-overlay');
-      const loginPwdInput = document.getElementById('login-pwd');
-      const loginErrorMsg = document.getElementById('login-error-msg');
-      
+    <script>
       const fabContainer = document.getElementById('fab-container');
       const fabMain = document.getElementById('fab-main');
       const launcherScreen = document.getElementById('home-screen');
       const frames = document.querySelectorAll('.app-frame');
       const toastMsg = document.getElementById('toast-msg');
 
-      const menuIconSvg = '<svg viewBox="0 0 24 24"><path d="M4 18h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1zm0-5h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1zM3 7c0 .55.45 1 1 1h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1z"/></svg>';
+      const menuIconSvg = '<svg viewBox="0 0 24 24"><path d="M4 18h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1zm0-5h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1zM3 7c0 .55.45 1 1 1h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1z"/></svg>';
       const closeIconSvg = '<svg viewBox="0 0 24 24"><path d="M18.3 5.71a.996.996 0 0 0-1.41 0L12 10.59 7.11 5.7a.996.996 0 1 0-1.41 1.41L10.59 12 5.7 16.89a.996.996 0 1 0 1.41 1.41L12 13.41l4.89 4.89a.996.996 0 1 0 1.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z"/></svg>';
 
       fabMain.innerHTML = menuIconSvg;
 
-      // ===========================
-      // 2. 自动加载数据 (网页一打开就开始)
-      // ===========================
-      async function loadGlobalData() {
-          try {
-              console.log("正在从VPS加载全局数据...");
-              const res = await fetch('/api/global_data');
-              globalSettings = await res.json();
-              console.log("数据加载成功:", globalSettings);
-          } catch (e) {
-              console.error("加载数据失败，可能网络不通", e);
-          }
-      }
-      // 立即执行加载
-      loadGlobalData();
-
-      // ===========================
-      // 3. 假登陆逻辑
-      // ===========================
-      
-      // 如果之前解锁过（刷新页面），保持解锁状态
-      if (sessionStorage.getItem('is_unlocked')) {
-          loginOverlay.classList.add('unlocked');
-      }
-
-      function attemptLogin() {
-        const pwd = loginPwdInput.value;
-        
-        // 纯前端判断，骗骗朋友用的
-        if (pwd === FAKE_PASSWORD) {
-            loginOverlay.classList.add('unlocked');
-            sessionStorage.setItem('is_unlocked', 'true');
-        } else {
-            loginErrorMsg.classList.add('show');
-            loginPwdInput.value = '';
-            setTimeout(() => {
-                loginErrorMsg.classList.remove('show');
-            }, 1000);
-        }
-      }
-      
-      // 回车键解锁
-      loginPwdInput.addEventListener('keypress', (e) => {
-          if(e.key === 'Enter') attemptLogin();
-      });
-
-      // ===========================
-      // 4. App 打开与数据同步逻辑
-      // ===========================
-      
       function openApp(frameId) {
         document.body.classList.add('app-open');
         launcherScreen.style.opacity = '0';
@@ -845,6 +633,7 @@
             frame.style.display = 'flex';
             setTimeout(() => frame.classList.add('active'), 10);
             
+            // 延迟加载 iframe 节省资源
             const iframe = frame.querySelector('iframe');
             if (iframe && iframe.dataset.src && !iframe.getAttribute('src')) {
                 iframe.src = iframe.dataset.src;
@@ -866,51 +655,12 @@
           frames.forEach(frame => {
             frame.classList.remove('active');
             frame.style.display = 'none';
-            // 不清空 src，保持后台运行体验更好
+            // 可选：如果要节省内存，可以在这里清空 iframe.src
           });
         }, 300);
         closeMenu();
       }
 
-      // ★★★ 中央数据处理中心 ★★★
-      window.addEventListener('message', (event) => {
-          const data = event.data;
-          if (!data || !data.type) return;
-
-          // 子网页请求数据
-          if (data.type === 'APP_READY') {
-              const appId = data.appId;
-              const appData = globalSettings[appId] || {};
-              
-              console.log(`[主程序] 发送数据给 ${appId}`);
-              event.source.postMessage({
-                  type: 'IMPORT_DATA',
-                  payload: appData
-              }, '*');
-          }
-
-          // 子网页保存数据
-          if (data.type === 'EXPORT_DATA') {
-              const appId = data.appId;
-              const newData = data.payload;
-              
-              // 1. 更新内存
-              globalSettings[appId] = newData;
-
-              // 2. 发送给 VPS
-              console.log(`[主程序] 同步 ${appId} 到 VPS`);
-              fetch('/api/save_global', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ appId: appId, data: newData })
-              });
-          }
-      });
-
-      // ===========================
-      // 5. 菜单与 UI 逻辑 (保持不变)
-      // ===========================
-      
       function hideFab() {
         closeMenu();
         const mainRect = fabMain.getBoundingClientRect();
@@ -944,7 +694,6 @@
           }, 50);
           return;
         }
-
         fabContainer.classList.toggle('menu-open');
         fabMain.classList.toggle('expanded');
         fabMain.innerHTML = fabMain.classList.contains('expanded') ? closeIconSvg : menuIconSvg;
@@ -956,15 +705,15 @@
         fabMain.innerHTML = menuIconSvg;
       }
 
-      // 点击外部关闭菜单
       document.addEventListener('click', e => {
         if (!fabContainer.contains(e.target) && fabContainer.classList.contains('menu-open')) {
           closeMenu();
         }
       });
 
-      // 拖拽功能
-      let isDragging = false, hasMoved = false;
+      // 拖拽逻辑
+      let isDragging = false;
+      let hasMoved = false;
       let startX, startY, initialLeft, initialTop;
 
       fabMain.addEventListener('mousedown', startDrag);
@@ -1003,7 +752,6 @@
       function onDrag(e) {
         if (!isDragging) return;
         e.preventDefault();
-        
         let clientX, clientY;
         if (e.type === 'touchmove') {
           clientX = e.touches[0].clientX;
@@ -1012,14 +760,9 @@
           clientX = e.clientX;
           clientY = e.clientY;
         }
-
         const deltaX = clientX - startX;
         const deltaY = clientY - startY;
-
-        if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
-          hasMoved = true;
-        }
-
+        if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) hasMoved = true;
         fabContainer.style.left = initialLeft + deltaX + 'px';
         fabContainer.style.top = initialTop + deltaY + 'px';
       }
@@ -1037,15 +780,15 @@
         if (!hasMoved) toggleMenu();
       });
 
-      // 唤醒逻辑
-      window.addEventListener('load', () => {
+      // 初始化与唤醒
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
           document.addEventListener('dblclick', () => {
             if (fabContainer.classList.contains('ghost-mode')) {
               showFab();
               showToast('已唤出菜单');
             }
           });
-
           let lastTapTime = 0;
           document.addEventListener('touchend', e => {
             const currentTime = new Date().getTime();
@@ -1059,12 +802,9 @@
             }
             lastTapTime = currentTime;
           });
-          
-          if ('serviceWorker' in navigator) {
-             navigator.serviceWorker.register('sw.js');
-          }
-      });
+          navigator.serviceWorker.register('sw.js');
+        });
+      }
     </script>
-    
   </body>
 </html>
