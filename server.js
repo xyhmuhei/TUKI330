@@ -4,21 +4,33 @@ const app = express();
 const bodyParser = require('body-parser');
 
 // ===========================
-// ★★★ 在这里修改你的密码 ★★★
+// 配置区域
 // ===========================
-const MY_SECRET_PASSWORD = "admin";  // 把 admin 改成你想设的密码
-const PORT = 7000;                   // 程序运行的端口
+const MY_SECRET_PASSWORD = "admin"; // 记得改成你的密码
+const PORT = 8080;
+
+// ★★★ 关键修改：定义另外两个仓库在 VPS 上的文件夹名字 ★★★
+// 假设你稍后会把仓库克隆到 EPhone 的隔壁，名字分别是 site330 和 sitetuk
+const PATH_TO_330 = '../site330'; 
+const PATH_TO_TUK = '../sitetuk';
 // ===========================
 
 app.use(bodyParser.json());
-// 托管当前目录下的所有静态文件 (index.html, css, 图片等)
+
+// 1. 托管 EPhone 自己的静态文件
 app.use(express.static(path.join(__dirname, '/')));
 
-// 登录接口：接收前端发来的密码并比对
+// 2. ★★★ 核心魔法：把隔壁文件夹挂载成虚拟路径 ★★★
+// 当浏览器访问 /site330 时，读取 ../site330 文件夹的内容
+app.use('/site330', express.static(path.join(__dirname, PATH_TO_330)));
+
+// 当浏览器访问 /sitetuk 时，读取 ../sitetuk 文件夹的内容
+app.use('/sitetuk', express.static(path.join(__dirname, PATH_TO_TUK)));
+
+
+// 登录接口
 app.post('/api/login', (req, res) => {
     const { password } = req.body;
-    console.log("收到登录尝试，密码:", password); // 在VPS后台打印日志
-
     if (password === MY_SECRET_PASSWORD) {
         res.json({ success: true, message: "Login successful" });
     } else {
@@ -27,9 +39,7 @@ app.post('/api/login', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`=========================================`);
-    console.log(`EPhone 服务已启动!`);
-    console.log(`访问地址: http://你的VPS_IP:${PORT}`);
-    console.log(`当前设置的密码是: ${MY_SECRET_PASSWORD}`);
-    console.log(`=========================================`);
+    console.log(`EPhone 服务启动: http://localhost:${PORT}`);
+    console.log(`挂载子应用 330: ${path.join(__dirname, PATH_TO_330)}`);
+    console.log(`挂载子应用 Tuk: ${path.join(__dirname, PATH_TO_TUK)}`);
 });
