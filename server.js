@@ -7,7 +7,7 @@ const bodyParser = require('body-parser');
 // 配置区域
 // ===========================
 const MY_SECRET_PASSWORD = "admin"; // 记得改成你的密码
-const PORT = 8080;
+const PORT = 7000;
 
 // ★★★ 关键修改：定义另外两个仓库在 VPS 上的文件夹名字 ★★★
 // 假设你稍后会把仓库克隆到 EPhone 的隔壁，名字分别是 site330 和 sitetuk
