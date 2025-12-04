@@ -74,7 +74,7 @@
         overflow: hidden;
       }
 
-      /* --- 登录锁屏界面 --- */
+     /* --- 登录锁屏界面 (已更新支持注册) --- */
       #login-overlay {
         position: fixed;
         top: 0;
@@ -105,7 +105,13 @@
         box-shadow: 0 15px 35px rgba(141, 110, 99, 0.25);
         text-align: center;
         position: relative;
+        /* --- 关键修改点：适应账号+密码输入框 --- */
+        width: 260px; 
+        display: flex;
+        flex-direction: column;
+        align-items: center;
       }
+      
       /* 锁屏顶部的装饰 */
       .login-box::before {
         content: 'SECURITY LOCK';
@@ -126,21 +132,21 @@
         font-size: 18px;
         margin-bottom: 25px;
         letter-spacing: 2px;
+        font-weight: bold;
       }
 
       .login-input {
         background: #fffdf5;
         border: 2px solid #e6ceac;
-        padding: 12px 15px;
+        padding: 10px 15px;
         border-radius: 8px;
         font-family: var(--font-main);
-        font-size: 18px;
+        font-size: 16px;
         color: var(--text-deep);
-        width: 200px;
+        width: 220px; /* 宽度调整 */
         text-align: center;
         outline: none;
-        letter-spacing: 5px; /* 密码掩码间距 */
-        margin-bottom: 20px;
+        margin-bottom: 15px; /* 输入框之间的间距 */
         transition: 0.3s;
       }
       .login-input:focus {
@@ -160,11 +166,14 @@
         cursor: pointer;
         box-shadow: 0 5px 15px rgba(93, 64, 55, 0.3);
         transition: 0.2s;
+        margin-top: 10px;
+        width: 150px;
       }
       .login-btn:active {
         transform: scale(0.95);
         box-shadow: 0 2px 5px rgba(93, 64, 55, 0.3);
       }
+      
       .login-error {
         color: #d32f2f;
         font-size: 12px;
@@ -175,6 +184,19 @@
       }
       .login-error.show { opacity: 1; }
 
+      /* --- 新增：切换注册/登录的文字 --- */
+      .login-toggle-text {
+        margin-top: 15px;
+        font-size: 12px;
+        color: var(--text-brown);
+        cursor: pointer;
+        text-decoration: underline;
+        opacity: 0.8;
+      }
+      .login-toggle-text:hover {
+        opacity: 1;
+      }
+      
       /* --- 原有样式继续 --- */
       .screen {
         width: 100%;
@@ -610,15 +632,26 @@
     </script>
   </head>
   <body>
-    <!-- 登录锁屏遮罩 -->
+<!-- 登录锁屏遮罩 -->
     <div id="login-overlay">
       <div class="login-box">
-        <div class="login-title">ENTER PASSCODE</div>
+        <div class="login-title" id="login-title-text">LOGIN</div>
+        
+        <!-- 账号输入框 -->
+        <input type="text" id="login-user" class="login-input" placeholder="Username" autocomplete="off" />
+        
         <!-- 密码输入框 -->
-        <input type="password" id="login-pwd" class="login-input" placeholder="●●●●" maxlength="20" />
+        <input type="password" id="login-pwd" class="login-input" placeholder="Password" maxlength="20" />
+        
         <br />
-        <button class="login-btn" onclick="attemptLogin()">UNLOCK</button>
-        <div class="login-error" id="login-error-msg">Incorrect Passcode</div>
+        <button class="login-btn" id="login-action-btn" onclick="handleAuth()">UNLOCK</button>
+        
+        <div class="login-error" id="login-error-msg">Error Message</div>
+        
+        <!-- 切换登录/注册 -->
+        <div class="login-toggle-text" onclick="toggleRegisterMode()">
+          没有账号？点此注册
+        </div>
       </div>
     </div>
 
@@ -721,61 +754,95 @@
     </div>
 
     <script>
-      // 1. 登录逻辑
+// 1. 登录/注册 逻辑
       const loginOverlay = document.getElementById('login-overlay');
+      const loginUserInput = document.getElementById('login-user');
       const loginPwdInput = document.getElementById('login-pwd');
       const loginErrorMsg = document.getElementById('login-error-msg');
+      const loginTitle = document.getElementById('login-title-text');
+      const loginBtn = document.getElementById('login-action-btn');
+      
+      let isRegisterMode = false;
 
-      // 检查本地是否已有登录记录 (可选，避免刷新重复登录)
+      // 检查本地是否已有登录记录
       if (localStorage.getItem('ephone_unlocked') === 'true') {
         loginOverlay.classList.add('unlocked');
       }
 
-      async function attemptLogin() {
-        const pwd = loginPwdInput.value;
-        if (!pwd) return;
+      function toggleRegisterMode() {
+        isRegisterMode = !isRegisterMode;
+        if (isRegisterMode) {
+            loginTitle.innerText = "REGISTER";
+            loginBtn.innerText = "CREATE";
+            document.querySelector('.login-toggle-text').innerText = "返回登录";
+        } else {
+            loginTitle.innerText = "LOGIN";
+            loginBtn.innerText = "UNLOCK";
+            document.querySelector('.login-toggle-text').innerText = "没有账号？点此注册";
+        }
+        loginErrorMsg.classList.remove('show');
+      }
 
-        // --- 这里是修改后的核心代码 ---
+      async function handleAuth() {
+        const username = loginUserInput.value.trim();
+        const pwd = loginPwdInput.value.trim();
+        
+        if (!username || !pwd) {
+            showError("请输入账号和密码");
+            return;
+        }
+
+        const endpoint = isRegisterMode ? '/api/register' : '/api/login';
+
         try {
-          // 向我们在 server.js 里写的接口发送请求
-          const response = await fetch('/api/login', {
+          const response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: pwd })
+            body: JSON.stringify({ username: username, password: pwd })
           });
           
           const data = await response.json();
           
           if (data.success) {
-            unlockSuccess(); // 密码正确，解锁
+            if (isRegisterMode) {
+                // 注册成功后，自动切换回登录模式，或者直接登录
+                alert("注册成功！请直接登录。");
+                toggleRegisterMode();
+                // 自动填入
+                loginUserInput.value = username;
+                loginPwdInput.value = pwd;
+            } else {
+                // 登录成功
+                unlockSuccess();
+            }
           } else {
-            showError();     // 密码错误，震动/提示
+            showError(data.message);
           }
         } catch (e) {
-            // 如果连接不上服务器（比如网络断了），也报错
-            showError();
-            console.error("Login Error:", e);
+            showError("连接服务器失败");
+            console.error("Auth Error:", e);
         }
-        // --- 修改结束 ---
       }
 
       function unlockSuccess() {
         loginOverlay.classList.add('unlocked');
-        localStorage.setItem('ephone_unlocked', 'true'); // 记住登录状态
+        localStorage.setItem('ephone_unlocked', 'true');
       }
 
-      function showError() {
+      function showError(msg) {
+        loginErrorMsg.innerText = msg;
         loginErrorMsg.classList.add('show');
-        loginPwdInput.value = '';
         setTimeout(() => {
           loginErrorMsg.classList.remove('show');
         }, 2000);
       }
       
-      // 监听回车键登录
+      // 监听回车键
       loginPwdInput.addEventListener('keypress', function(e) {
-        if(e.key === 'Enter') attemptLogin();
+        if(e.key === 'Enter') handleAuth();
       });
+
+      // ... 后面的代码保持不变 ...
 
 
       // 2. 原有的 App 逻辑
